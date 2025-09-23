@@ -1,3 +1,0 @@
-- name: Disable Jekyll
-  run: touch ./docs/.nojekyll
-
