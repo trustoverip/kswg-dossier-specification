@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "EBLnGaNHgEnOvMDqnQO8lpzPQqfZRxC_Rdoinii5buGz",
+  "title": "Dossier",
+  "description": "Empty schema that all dossiers MUST reference to trigger dossier processing semantics (see https://trustoverip.github.io/kswg-dossier-specification/).",
+  "type": "object",
+  "version": "1.0.0",
+  "properties": {
+    "v": {
+      "title": "Version String",
+      "description": "Protocol type, version, serialization type, size, and terminator.",
+      "type": "string",
+      "pattern": "^(?:ACDC(?:[A-Za-z0-9_-]{6}(?:JSON|CBOR|MGPK|CESR)[A-Za-z0-9_-]{4}\\.|[0-9a-f]{2}(?:JSON|CBOR|MGPK|CESR)[0-9a-f]{6}_))$"
+    },
+    "d": {
+      "title": "Digest (SAID)",
+      "description": "Self-referential fully qualified cryptographic digest (Self-Addressing Identifier).",
+      "type": "string",
+      "pattern": "^(?:[BE][A-Za-z0-9_-]{43}|0[DEFG][A-Za-z0-9_-]{86})$"
+    },
+    "i": {
+      "title": "Issuer Identifier (AID)",
+      "description": "Autonomic Identifier whose control authority is established via KERI key state.",
+      "type": "string",
+      "pattern": "^(?:[BE][A-Za-z0-9_-]{43}|0[DEFG][A-Za-z0-9_-]{86})$"
+    },
+    "s": {
+      "title": "Schema Identifier or Embedded Schema",
+      "description": "Either the SAID of a JSON Schema block or the schema block itself.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^(?:[BE][A-Za-z0-9_-]{43}|0[DEFG][A-Za-z0-9_-]{86})$"
+        },
+        {
+          "$ref": "https://json-schema.org/draft/2020-12/schema"
+        }
+      ]
+    }
+  },
+  "required": [
+    "v",
+    "d",
+    "i",
+    "s"
+  ],
+  "additionalProperties": true
+}
