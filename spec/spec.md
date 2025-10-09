@@ -1,7 +1,7 @@
 Verifiable Dossiers
 ================================================
 
-**Specification Status**: v0.1 Draft
+**Specification Status**: v0.3 Draft
 
 **Latest Draft:**
 
@@ -44,7 +44,7 @@ In both the physical and digital realms, critical decisions are rarely based on 
 In the digital world, this aggregation process is fraught with challenges. The core problem is the absence of a standardized, cryptographically secure method to aggregate diverse pieces of evidence, attest to the integrity of the collection, and manage its lifecycle in a decentralized and interoperable manner. Existing systems for evidence management are often siloed within proprietary platforms, dependent on centralized trusted parties, or lack the cryptographic guarantees necessary for high-assurance environments. This fragmentation creates friction, inhibits interoperability across domains (e.g., between different jurisdictions or industries), and introduces single points of failure that can be compromised or become unavailable.
 
 ### Introducing the Dossier: An Issuer-Centric Evidence Container
-This specification introduces the dossier as a solution to these challenges. A dossier is formally defined as an Authentic Chained Data Container (ACDC) that references an arbitrarily rich collection of signed evidence and is issued by the party that assembles it. It is a container designed to create a verifiable data graph from constituent evidentiary artifacts.
+This specification introduces the dossier as a solution to these challenges. A dossier is formally defined as an Authentic Chained Data Container (ACDC) that references an arbitrarily rich collection of signed evidence and is issued by the party that assembles it. It is a container designed to create a verifiable data graph from evidentiary artifacts.
 
 A critical distinction separates a dossier from a traditional verifiable credential. A credential typically makes an assertion about a specific subject, or issuee, conferring some right or attribute upon them. A dossier, by contrast, has no issuee. It has only an issuer—the entity that curates the collection. In this sense, a dossier functions more like a notarized affidavit than a passport; the issuer is making a formal, verifiable attestation about the composition and integrity of the evidence collection itself. This issuer-centric model represents a fundamental shift from traditional subject-centric identity paradigms.
 
@@ -124,11 +124,16 @@ This specification assumes familiarity with the following core concepts, which a
 
 * Issuer: An entity that creates and signs a data structure like an ACDC.
 * Verifier: An entity that consumes and validates a data structure to make a trust decision.
-* Evidence: Data that supports an assertion.
 * Authentic Chained Data Container (ACDC): A verifiable data container format defined in.2
 * Self-Addressing Identifier (SAID): A cryptographically generated, content-addressable identifier for a data object, as defined in the ACDC and KERI specifications.1
 * Autonomic Identifier (AID): A self-certifying identifier managed via the KERI protocol.1
 * Key Event Log (KEL): A verifiable, append-only log of key management events for an AID, as defined in the KERI specification.1
+* Edge: A property in the `e` section of an ACDC that binds the ACDC to an external digital artifact by using a hash for (or, in some cases, a digital signature embedded in) that artifact.
+
+In addition the following terms are defined normatively, here:
+
+* Evidentum: A single external artifact that is referenced by an edge. A countable group of these artifacts is pluralized as "evidenta", but is usually referred to with the uncounted, collective form, "evidence".
+* Proximate Metdata: Metadata about the dossier as a whole that the issuer of the dossier wishes to directly attest as part of the issuance process.
 
 [//]: # (Dossier Data Model {#sec:content})
 
@@ -136,24 +141,15 @@ This specification assumes familiarity with the following core concepts, which a
 
 ### Core Structure: The Dossier as an ACDC
 
-A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification.2 As such, it MUST include the standard ACDC top-level fields:
-
-* `v`: A string indicating the version of the ACDC specification.
-* `d`: The Self-Addressing Identifier (SAID) of the dossier itself, providing a tamper-evident hash of its canonicalized content.
-* `i`: The Autonomic Identifier (AID) of the dossier's issuer.
-* `s`: The SAID of the JSON Schema to which the dossier conforms.
-
-The defining characteristic that distinguishes a dossier from a credential-like ACDC is the absence of an issuee field within its primary attribute block (a). The issuer (i) is the sole principal party identified in the dossier's root structure, reinforcing its role as a self-issued attestation or affidavit.
+A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification.2
 
 ### The Role of the Issuer
 
-The issuer of a dossier is the entity that curates the collection of evidence and attests to its composition by digitally signing the container. The issuer's signature makes a specific, verifiable assertion: at the time of issuance, the collection of evidence referenced within the dossier is the exact collection the issuer intended to present. The issuer does not necessarily attest to the veracity of the claims within the constituent evidence, but rather to the integrity and composition of the collection itself.
+The issuer of a dossier is the entity that curates the collection of evidence and attests to its composition by digitally signing the container. The issuer's signature makes a specific, verifiable assertion: at the time of issuance, the collection of evidence referenced within the dossier is the exact collection the issuer intended to present. The issuer does not necessarily attest to the veracity of the claims within the evidence, but rather to the integrity and composition of the collection itself.
 
-To ensure the long-term verifiability and non-repudiation of this attestation, the issuer's Autonomic Identifier (AID) MUST be a KERI-based identifier. This ensures that the issuer maintains a Key Event Log (KEL), which provides a secure and auditable history of the key state used to sign the dossier at the moment of its creation.
+### The Edges Attribute: Linking to Evidence
 
-### The Edges Attribute: Linking to Constituent Evidence
-
-The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external evidence artifacts. This graph is contained within an edges block (`e`), as defined in the ACDC specification.[[2]] This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.
+The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external evidence. This graph is contained within an edges block (`e`), as defined in the ACDC specification.[[2]] This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.
 
 A dossier MAY contain an unbounded number of edges, reflecting its core purpose of aggregating an arbitrary quantity and variety of evidence. The field names (keys) for these edges MAY be any valid JSON string, allowing issuers to provide semantically meaningful labels for the linked evidence (e.g.,
 "vettingCredential", "forensicReport_01", "tnAllocationProof"), as demonstrated in the Verifiable Voice Protocol (VVP) specification.
@@ -162,17 +158,39 @@ A dossier MAY contain an unbounded number of edges, reflecting its core purpose 
 
 To ensure a baseline of interoperability while preserving the flexibility required for diverse use cases, all dossiers MUST conform to a base JSON Schema. This specification defines the normative requirements for such a schema.
 
-A compliant base schema for a dossier MUST:
+A compliant schema for a dossier:
 
-* Define the required top-level ACDC fields (v, d, i, s).
-* Define the attribute block (a) with a minimal set of properties, which SHOULD include an issuance timestamp (dt). The schema MUST NOT require an issuee field.
-* Define the edges block (e) as a JSON object.
-* Set the additionalProperties keyword to true at the root level and for the edges object. This is a critical design principle that allows issuers to include arbitrary, application-specific edges without invalidating the dossier against the base schema.1
+* MUST be composed of an `allOf` array, of which one object is a `$ref` that references the base dossier schema by its SAID, and other objects add additional structure as desired. The `$ref` to the base dossier signals that the schema is for a dossier and should be processed using the dossier semantics defined in this spec. Example:
+
+    ```json
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://example.org/schemas/acdc-minimum.json",
+        "title": "Mortgage Creditworthiness Dossier",
+        "description": "Evidence of a borrower's qualification for a mortgage.",
+        "properties": {
+            "allOf": [
+                { 
+                    "description": "reference to dossier base schema",
+                    "$ref": "EBLnGaNHgEnOvMDqnQO8lpzPQqfZRxC_Rdoinii5buGz" },
+                {
+                    "type": "object",
+                    "description": "add properties unique to this dossier in next obj"
+                    "properties": {
+                    }
+                }
+            ]
+        }
+    }
+    ```
+
+* MUST define fields within the ACDC `a` section for proximate metadata.
+* MUST use the ACDC `e` section (edges) to bind to the dossier to all evidenta, and MUST NOT place any evidenta in the `a` section.
+* MAY include edges that are for traditional ACDC relationships but not for evidenta.
+* SHOULD NOT include an issuee field.
+* SHOULD set the `additionalProperties` keyword to true at the root level and for the edges object. This is a critical design principle that allows issuers to include arbitrary, application-specific edges without invalidating the dossier against the base schema.
 
 This mandated flexibility has a direct consequence for implementers of verifier systems. A generic dossier verifier can be built to perform universal cryptographic validation—confirming signatures, SAIDs, and KEL consistency—for any dossier conforming to the base schema. However, such a generic verifier cannot be expected to understand the full semantics of every possible dossier. For instance, it can verify that an edge labeled "lunarPropertyDeed" is cryptographically linked, but it cannot know what that means or how to process it. Therefore, verification must be understood as a layered process. The first layer, cryptographic validation, is universal and defined by this specification. The second layer, semantic validation (e.g., "Does this dossier contain a valid TNAlloc credential for the phone number in question?"), is necessarily application-specific and requires context-dependent business logic. This separation allows the dossier format to be a universal building block for evidence aggregation across countless current and future use cases.
-
-### Naming and Identification Conventions
-To aid in discovery, debugging, and human readability, it is RECOMMENDED that any schema designed for a specific type of dossier include the string "dossier" in its title or description metadata fields. This convention helps distinguish dossier schemas from credential schemas in a registry or repository.
 
 ## Incorporating Evidence
 
@@ -232,13 +250,13 @@ Curation is the process of creating a dossier. This phase is typically performed
 
 The normative steps for dossier curation are as follows:
 
-1. **Evidence Acquisition**: The entity intending to issue the dossier first acquires the necessary constituent evidence artifacts from their respective authoritative sources. For example, a business might obtain a legal entity vetting credential from a qualified issuer, a telephone number allocation credential from its carrier, and a brand credential from a brand vetter.1
+1. **Evidence Acquisition**: The entity intending to issue the dossier first acquires the necessary evidence from their respective authoritative sources. For example, a business might obtain a legal entity vetting credential from a qualified issuer, a telephone number allocation credential from its carrier, and a brand credential from a brand vetter.1
 
-1. **Assembly**: The issuer constructs the dossier ACDC data structure. This involves creating an edges block and populating it with named links that point to each acquired evidence artifact, as described in Section 3.
+2. **Assembly**: The issuer constructs the dossier ACDC data structure. This involves creating an edges block and populating it with named links that point to each acquired evidence artifact, as described in Section 3.
 
-1. **Signing and Anchoring**: The issuer uses the private key(s) associated with its KERI AID to sign the fully assembled dossier ACDC. This act of signing creates a non-repudiable attestation to the dossier's content. The issuance event, including the signature, is then anchored in the issuer's Key Event Log (KEL), providing a permanent, verifiable record.
+3. **Signing and Anchoring**: The issuer uses the private key(s) associated with its KERI AID to sign the fully assembled dossier ACDC. This act of signing creates a non-repudiable attestation to the dossier's content. The issuance event, including the signature, is then anchored in the issuer's Key Event Log (KEL), providing a permanent, verifiable record.
 
-1. **Publication**: The issuer publishes the signed dossier ACDC at a stable, publicly resolvable location, typically one or more HTTP URLs. This allows authorized verifiers to fetch the dossier when it is cited.1
+4. **Publication**: The issuer publishes the signed dossier ACDC at a stable, publicly resolvable location, typically one or more HTTP URLs. This allows authorized verifiers to fetch the dossier when it is cited.1
 
 ### Citation: Referencing the Dossier in Protocols
 
@@ -248,25 +266,25 @@ A citation is a reference that allows a verifier to locate and retrieve the full
 
 ### Verification: Algorithm for Validation
 
-Verification is the process by which a recipient of a dossier citation validates the dossier and its entire graph of constituent evidence. The following normative algorithm, generalized from the process described in the VVP specification, outlines the required steps for a compliant verifier.1
+Verification is the process by which a recipient of a dossier citation validates the dossier and its entire graph of evidence. The following normative algorithm, generalized from the process described in the VVP specification, outlines the required steps for a compliant verifier.1
 
 The algorithm requires two inputs: the dossier citation and a referenceTime (which may be the current time for real-time validation or a time in the past for historical analysis).
 
 1. **Fetch Dossier**: Resolve the dossier citation (e.g., the OOBI URL) to retrieve the full dossier ACDC.
-1. **Validate Dossier Integrity and Signature**:
+2. **Validate Dossier Integrity and Signature**:
 
     1. Calculate the SAID of the retrieved data and verify that it matches the SAID expected from the citation, if available.
-    1. Retrieve the issuer's KEL.
-    1. Verify the signature on the dossier against the issuer's public key(s) that were authoritative at the referenceTime, as determined by the KEL.
+    2. Retrieve the issuer's KEL.
+    3. Verify the signature on the dossier against the issuer's public key(s) that were authoritative at the referenceTime, as determined by the KEL.
 
-1. **Recursive Graph Traversal and Validation**: For each named edge in the dossier's edges block:
+3. **Recursive Graph Traversal and Validation**: For each named edge in the dossier's edges block:
 
     1. Fetch the referenced evidence artifact (e.g., another ACDC).
-    1. Validate the integrity and signature of the artifact in the same manner as the dossier, using its issuer's KEL and the referenceTime.
-    1. If the fetched artifact itself contains links to further evidence (e.g., a vetting credential linking to the credential of its issuer), recursively perform this validation step for all nodes in the evidence graph.
+    2. Validate the integrity and signature of the artifact in the same manner as the dossier, using its issuer's KEL and the referenceTime.
+    3. If the fetched artifact itself contains links to further evidence (e.g., a vetting credential linking to the credential of its issuer), recursively perform this validation step for all nodes in the evidence graph.
    
-1. **Check Revocation Status**: For the dossier itself and for every verifiable artifact in its evidence graph, check for any revocation events that are effective as of the referenceTime. This check MUST be performed by consulting the issuer's KEL or a designated status registry specified within the artifact.1
-1. **Apply Semantic Rules**: After successful cryptographic validation of the entire evidence graph, the verifier MUST apply any application-specific business logic or policy rules. Examples include: confirming that a TNAlloc credential covers the specific phone number used in a call, or that a delegation credential authorizes the specific action being performed.
+4. **Check Revocation Status**: For the dossier itself and for every verifiable artifact in its evidence graph, check for any revocation events that are effective as of the referenceTime. This check MUST be performed by consulting the issuer's KEL or a designated status registry specified within the artifact.1
+5. **Apply Semantic Rules**: After successful cryptographic validation of the entire evidence graph, the verifier MUST apply any application-specific business logic or policy rules. Examples include: confirming that a TNAlloc credential covers the specific phone number used in a call, or that a delegation credential authorizes the specific action being performed.
 
 This rigorous verification process reveals a key architectural principle of systems using dossiers: the "root of trust" is not a single, centralized entity. Instead, it is a set of issuer AIDs that the verifier must trust for specific types of claims. A verifier of a VVP dossier, for instance, must trust the issuer of the legal entity credential, the telecom regulator that anchors the telephone number allocation chain, and the brand vetter. This decentralizes not only the data but also the trust decisions themselves. Consequently, a critical component of any compliant verifier implementation is a configurable root-of-trust policy.
 
