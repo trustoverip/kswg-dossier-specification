@@ -165,7 +165,7 @@ A compliant schema for a dossier:
     ```json
     {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "$id": "https://example.org/schemas/acdc-minimum.json",
+        "$id": "EOvMDBLnGaNHqfZgEnqnQO8lpzPQ5bRxC_RdoiniiuGz",
         "title": "Mortgage Creditworthiness Dossier",
         "description": "Evidence of a borrower's qualification for a mortgage.",
         "allOf": [

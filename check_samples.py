@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 import argparse
 
+VALID_SAID_PAT = re.compile(r'^(?:[BE][A-Za-z0-9_-]{43}|0[DEFG][A-Za-z0-9_-]{86})$')
+
 def extract_json_blocks(md_text):
     # Find all code blocks marked as json
     pattern = re.compile(r'```json\s*(.*?)```', re.DOTALL)
@@ -34,13 +36,16 @@ def validate_json_schema_block(block, dossier_schema_id):
     except Exception:
         return False, "invalid_json", None
     if "$schema" in block:
+        # Check $id field validity
+        if not isinstance(obj, dict) or "$id" not in obj:
+            return False, "missing_id", None
+        if not VALID_SAID_PAT.match(str(obj["$id"])):
+            return False, "invalid_id", obj["$id"]
         try:
             jsonschema.Draft202012Validator.check_schema(obj)
         except Exception as e:
             return False, "invalid_schema", str(e)
         # Check for allOf/$ref logic at the root level
-        if not isinstance(obj, dict):
-            return False, "not_object", None
         if "allOf" not in obj:
             return False, "missing_allOf", None
         allof = obj["allOf"]
@@ -85,16 +90,16 @@ def main():
         if "$schema" in block:
             valid, error_type, error_msg = validate_json_schema_block(block, dossier_schema_id)
             if not valid:
-                if error_type == "invalid_schema":
+                if error_type == "missing_id":
+                    print(f"Block {idx+1}, beginning at line {start_line} of spec.md: JSON Schema block missing '$id' field.")
+                elif error_type == "invalid_id":
+                    print(f"Block {idx+1}, beginning at line {start_line} of spec.md: JSON Schema block has invalid $id value: {error_msg}")
+                elif error_type == "invalid_schema":
                     print(f"Block {idx+1}, beginning at line {start_line} of spec.md: Invalid JSON Schema. {error_msg}")
                 elif error_type == "not_object":
                     print(f"Block {idx+1}, beginning at line {start_line} of spec.md: JSON Schema block is not an object.")
-                elif error_type == "missing_properties":
-                    print(f"Block {idx+1}, beginning at line {start_line} of spec.md: JSON Schema block missing 'properties' key.")
-                elif error_type == "properties_not_dict":
-                    print(f"Block {idx+1}, beginning at line {start_line} of spec.md: 'properties' is not a dictionary.")
                 elif error_type == "missing_allOf":
-                    print(f"Block {idx+1}, beginning at line {start_line} of spec.md: 'allOf' key missing in 'properties'.")
+                    print(f"Block {idx+1}, beginning at line {start_line} of spec.md: 'allOf' key missing in schema object.")
                 elif error_type == "allOf_not_list":
                     print(f"Block {idx+1}, beginning at line {start_line} of spec.md: 'allOf' is not a list.")
                 elif error_type == "missing_ref":
