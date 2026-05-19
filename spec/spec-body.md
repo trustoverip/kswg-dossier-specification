@@ -374,6 +374,42 @@ Revocation logic in a joint issuance may be defined independently of issuance lo
 * Default: if no separate revocation rule is defined, the threshold required to revoke a dossier is identical to the threshold required to issue it.
 * Asymmetric thresholds: a dossier may specify different operators for creation and revocation. For example, a dossier may require a majority for issuance but allow a single administrative AID to perform a revocation.
 
+## Dossiers and Derivative References
+
+A dossier is intentionally heavy. It may be assembled once and signed jointly by many parties, may carry a graph of arbitrarily many evidence items, and may require a verifier to fetch and validate every node in that graph against multiple KELs. This cost is acceptable because a dossier is designed for reuse: curation happens once, and the resulting artifact serves as an authoritative reference for many later transactions, verifiers, and decisions.
+
+In transactional protocols, however, the dossier itself is rarely transmitted. Sending a multi-kilobyte ACDC and requiring full recursive verification on every call is impractical for real-time use cases such as a phone call, a checkout step, or an API request. Instead, the transactional payload carries a lightweight derivative that references the dossier. The dossier remains the primary, persistent artifact; the derivative is short-lived, single-purpose, and cheap to produce and validate.
+
+This specification recognizes two derivative forms:
+
+- **Citation.** A resolvable identifier (canonically an OOBI URL) that lets a verifier fetch the full dossier and run the verification algorithm. Citations are defined under *Citation: Referencing the Dossier in Protocols* above.
+
+- **Token.** A short-lived signed object that carries enough context for an immediate verification decision and embeds the dossier SAID as an evidence pointer. A minimal token might take this shape:
+
+    ```json
+    {
+        "iss": "EJ7q...kT9a",
+        "iat": 1747843200,
+        "exp": 1747843260,
+        "aud": "https://verifier.example/api",
+        "nonce": "f3c9...",
+        "evd": "E46p...5fa9"
+    }
+    ```
+
+    with a signature over the canonical encoding. The token asserts that, between `iat` and `exp`, its bearer is acting under the authority of the dossier whose SAID is given in `evd`. A verifier with a cached, previously validated copy of the dossier MAY accept the token without re-traversing the evidence graph. A verifier that requires fresh assurance dereferences `evd`, runs the full verification algorithm, and caches the result for subsequent presentations.
+
+A derivative MUST cryptographically bind to the dossier it references — minimally by including the dossier SAID under the derivative's signature. A derivative MUST NOT be treated as independent evidence: its authority derives entirely from the dossier, and its trust value collapses to that of the dossier alone if the binding cannot be checked.
+
+Derivatives inherit the dossier's revocation lifecycle. When a verifier evaluates a derivative, it MUST consult the dossier's revocation state effective at the verification time, not at the time the derivative was issued. A token issued before its referenced dossier was revoked is not valid after the revocation event, even if the token's own `exp` has not yet passed.
+
+This split between dossier and derivative separates two questions that are conflated in conventional bearer credentials:
+
+- *What was attested, and by whom?* This lives in the dossier and is curated once, then amortized across many transactions.
+- *Who is presenting it now, in what session, under what immediate constraints?* This lives in the derivative and is bound to the specific transaction through ephemeral fields (`iat`, `exp`, `aud`, `nonce`).
+
+Implementers MAY define additional derivative forms — for example, a summary that exposes a redacted subset of the dossier's proximate metadata for human review, or a blinded proof that attests dossier validity without revealing its SAID (see *Mitigation Strategies for Unwanted Correlation* below). Any such form is subject to the binding and revocation requirements above. Replay protections for transactional citation messages are addressed under *Replay Attack Mitigation in Citation Protocols* below.
+
 ## Security Considerations
 
 ### Integrity and Non-Repudiation Via KERI
@@ -528,3 +564,8 @@ canonical paper at [your published URL].
 
 [9] FA Schema
 [9]. Hardman, D. "Foreign Artifact Credential." [repo URL].
+
+[10] W3C VC Data Model
+[10]. Sporny, M., Longley, D., Sabadello, M., Reed, D., Steele, O., and Allen,
+C., Eds. "Verifiable Credentials Data Model v2.0." W3C Recommendation.
+https://www.w3.org/TR/vc-data-model-2.0/

@@ -42,6 +42,24 @@ In both the physical and digital realms, critical decisions are rarely based on 
 
 In the digital world, this aggregation process is fraught with challenges. The core problem is the absence of a standardized, cryptographically secure method that aggregates diverse pieces of evidence, attests to the integrity of the collection, and manages its lifecycle in a decentralized and interoperable manner. Existing systems for evidence management are often siloed within proprietary platforms, dependent on centralized trusted parties, or lack the cryptographic guarantees necessary for high-assurance environments. This fragmentation creates friction, inhibits interoperability across domains (e.g., between different jurisdictions or industries), and introduces single points of failure that can be compromised or become unavailable.
 
+### Evidence Lifespans and Verification Timing
+
+A second observation shapes the dossier design: the evidence underlying real-world decisions has wildly different lifespans, and the parties who later verify that evidence are usually not in contact with the signer at the moment of verification.
+
+Some evidence is **temporary**. A movie ticket, a JSON Web Token, a browser session cookie, or a transient network message carries authority for seconds or minutes — just long enough to complete a single interaction in a controlled environment.
+
+Other evidence is **changed occasionally**. A PIN, a password, a credit-card number, an X.509 certificate, or a magnetic key card carries a secret that the holder rotates on a scale of days to months as it expires or is suspected of compromise.
+
+A third class is **effectively permanent**. A birth certificate, a passport, articles of incorporation, a fingerprint or iris template, or a chain-of-custody record on a piece of forensic evidence anchors a fact that is meant to be relied on for years or decades.
+
+A dossier inhabits the permanent end of this spectrum. It snapshots evidence that the issuer expects to remain meaningful and verifiable long after issuance, in front of audiences and against questions the issuer cannot anticipate at signing time. Verifiers may consume a dossier indirectly: an auditor reviewing a loan years after funding, a court evaluating a chain of custody decades after collection, an insurance adjuster reconstructing facts about an incident years before the claim. None of these verifiers communicates with the issuer at the moment of verification.
+
+This asynchronous, indirect verification model has three direct consequences for the dossier design:
+
+1. **The artifact must stand alone.** Verification cannot depend on a live channel back to the issuer at verification time.
+2. **Recency and freshness vary per evidentum.** A bank balance referenced in a mortgage dossier may need to be less than a week old; an LEI vetting may be acceptable up to a year old; a passport scan may be acceptable for the document's full validity period. The dossier model accommodates these mixed timelines through per-edge metadata and Temporal Pinning, not through a single global expiry.
+3. **State must be reconstructible at an arbitrary historical point.** Verification at time T requires the key state, revocation state, and evidence state that were effective at T — not necessarily at the moment of verification. This is supported by KERI's historical-query capability over its KELs.
+
 ### Introducing the Dossier: An Issuer-Centric Evidence Container
 This specification introduces the dossier as a solution to these challenges. A dossier is formally defined as an Authentic Chained Data Container (ACDC) that references an arbitrarily rich collection of signed evidence and is issued by the party that assembles it. It is a container designed to create a verifiable data graph from evidentiary artifacts.
 
@@ -65,6 +83,27 @@ Recipient | No specific 'issuee' | Specific 'issuee' | Specific 'issuee'
 Analogy | Affidavit / Case File | License / Passport | Custom-Generated Report
 Creation Time | In advance of use | In advance of use | In response to a query
 Content Focus | Graph of external evidence | Attributes of the issuee | Subset of existing evidence
+
+### Relationship to W3C Verifiable Presentations
+
+Readers familiar with the W3C Verifiable Credentials Data Model [[10]] may see a surface resemblance between a dossier and a Verifiable Presentation (VP). Both are cryptographically verifiable containers of evidence presented in support of a decision. They solve different problems, however, and the differences are worth making explicit.
+
+Aspect | Dossier (ACDC-based) | Verifiable Presentation (W3C VC)
+--- | --- | ---
+Core role | Cryptographically verifiable container of evidence | Cryptographically verifiable container of credentials
+Interoperability model | Wraps or bridges multiple evidence formats, including VCs | Native to the VC ecosystem; interoperable within that model
+Primary actor | Curator (often the issuer) attests to the composition of the evidence collection | Holder presents credentials about a subject
+Subject model | No issuee; may describe arbitrary parties, events, or facts | Subject-centric; in practice typically the holder
+Payload structure | Graph of references (edges) to heterogeneous evidence | Flat bundle (usually VCs) responding to a proof request
+Lifecycle | Pre-curated, persistent, versioned, cacheable artifact | Ephemeral, generated per request or interaction
+Evidence flexibility | Files, ACDCs, foreign credentials, and wrapped artifacts; supports chained trust | Flexible in theory; in practice limited to VCs and similar credentials
+Trust semantics | "This is the complete evidence set I assembled" | "I possess valid credentials proving these claims"
+
+The most consequential practical difference is lifecycle. A VP is created in response to a verifier's request, signed by the holder, presented once, and discarded; if the same holder is asked again later, a new VP is generated. A dossier is assembled in advance, signed by the curator (not the subject), published at a stable location, and referenced repeatedly across many verifiers and many transactions.
+
+A second practical difference is the relationship to the subject. A VP is fundamentally a statement by a subject about themselves: "I hold these credentials." A dossier has no issuee. It is a statement by a curator about a body of evidence: "I assembled these artifacts about this matter, and here is the cryptographic record of that act." Many dossier use cases — a criminal investigation, a journalistic exposé, an audit report — do not have a single subject in the VC sense at all.
+
+These differences do not put the two models in opposition. A dossier MAY reference a W3C VC as one of its evidence items through the bridging mechanism described under *Bridging from Foreign Credential Ecosystems*. The two artifacts solve adjacent problems and can interoperate where their use cases overlap.
 
 ## Status of This Memo
 
