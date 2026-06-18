@@ -4,7 +4,7 @@
 
 ### Core Structure: The Dossier as an ACDC
 
-A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification [[2]].
+A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification [2](https://trustoverip.github.io/kswg-acdc-specification/).
 
 ### The Role of the Issuer
 
@@ -12,7 +12,7 @@ The issuer of a dossier is the entity that curates the collection of [[ref: evid
 
 ### The Edges Attribute: Linking to Evidence
 
-The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external [[ref: evidence]]. This graph is contained within an [[ref: edges]] block (`e`), as defined in the ACDC specification [[2]]. This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.
+The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external [[ref: evidence]]. This graph is contained within an [[ref: edges]] block (`e`), as defined in the ACDC specification [2](https://trustoverip.github.io/kswg-acdc-specification/). This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.
 
 A dossier MAY contain an unbounded number of edges, reflecting its core purpose of aggregating an arbitrary quantity and variety of evidence. The field names (keys) for these edges MAY be any valid JSON string, allowing issuers to provide semantically meaningful labels for the linked evidence (e.g.,
 "vettingCredential", "forensicReport_01", "tnAllocationProof"), as demonstrated in the Verifiable Voice Protocol (VVP) specification.
@@ -99,12 +99,12 @@ standard ACDC saidification algorithm, because that algorithm assumes JSON
 content that can be canonicalized and rewritten.
 
 The solution is to give the artifact a cryptographic identity using one of the
-algorithms defined in the *Bytewise and Externalized SAIDs* specification [[8]],
+algorithms defined in the *Bytewise and Externalized SAIDs* specification [8](https://dhh1128.github.io/keri-tools),
 and then issue a [[ref: foreign-artifact-wrapper, Foreign Artifact ACDC]] that attests to the [[ref: foreign-artifact, artifact]]'s identity
 and provenance. The resulting wrapper is a standard ACDC and can be linked into
 a dossier edge like any other evidentum.
 
-Two algorithms are defined in [[8]] for saidifying opaque artifacts:
+Two algorithms are defined in [8](https://dhh1128.github.io/keri-tools) for saidifying opaque artifacts:
 
 - The **bytewise SAID algorithm** (producing a **bSAID**) is appropriate for
   artifacts whose bytes can be rewritten after creation using native tooling —
@@ -112,14 +112,14 @@ Two algorithms are defined in [[8]] for saidifying opaque artifacts:
   where a comment can be inserted. The artifact receives an insertion point
   containing the SAID, making the identifier intrinsic to the artifact's byte
   stream. A verifier can recover the SAID by scanning the raw bytes for the
-  `SAID:` delimiter defined in [[8]].
+  `SAID:` delimiter defined in [8](https://dhh1128.github.io/keri-tools).
 
 - The **externalized SAID algorithm** (producing an **xSAID**) is appropriate
   for artifacts that cannot safely be rewritten after creation — for example,
   a compressed archive, an encrypted file, or a PDF whose cross-reference table
   would be invalidated by arbitrary byte modification. The SAID is carried in
   the filename under a constraint expressed inside the file content via the
-  `XSAID:` delimiter defined in [[8]].
+  `XSAID:` delimiter defined in [8](https://dhh1128.github.io/keri-tools).
 
 When neither algorithm is practical — for example, a data stream that was
 captured without an insertion point — the `content_digest` field of the wrapper
@@ -138,10 +138,10 @@ requirements:
 2. Its `a` section MUST contain a `content_digest` field holding a
    CESR-encoded hash, and a `content_type` field holding an IANA MIME type
    string.
-3. The `content_digest` SHOULD be a bSAID or xSAID as defined in [[8]].
+3. The `content_digest` SHOULD be a bSAID or xSAID as defined in [8](https://dhh1128.github.io/keri-tools).
 
 A reference schema and example for a Foreign Artifact ACDC are published
-separately at [[9]]. Implementers MAY define specialized schemas that
+separately at [9](https://dhh1128.github.io/keri-tools). Implementers MAY define specialized schemas that
 extend the reference schema for domain-specific artifact types, provided the
 minimum requirements above are satisfied.
 
@@ -332,7 +332,7 @@ additional fields appropriate to their domain.
 A dossier may be assembled and signed by a single party. For example, an artist who wishes to collect cryptographic evidence of their creations may do so as a solo activity. However, many dossiers snapshot evidence contributions from multiple parties, and so represent a group work product that needs an aggregate approval mechanism. In such cases, signing the ACDC that references all the individual pieces of evidence is managed with joint issuance.
 
 ### Logic
-Joint issuance is best understood not as a single, uniform approach to approval, but as a family or style of approval strategies. It maps onto the problem domain of coordinated control in multi-agent systems, which has been formally studied in robotics, AI, military science, and similar fields. Three variants of cooperative control are regularly mentioned in the literature [[5]] [[6]] [[7]]:
+Joint issuance is best understood not as a single, uniform approach to approval, but as a family or style of approval strategies. It maps onto the problem domain of coordinated control in multi-agent systems, which has been formally studied in robotics, AI, military science, and similar fields. Three variants of cooperative control are regularly mentioned in the literature [5](https://doi.org/10.1109/87.960341) [6](https://doi.org/10.1016/j.automatica.2014.10.022) [7](https://doi.org/10.1109/TAC.2004.834433):
 
 * leader-follower 
 * behavior-based control
@@ -535,34 +535,22 @@ This profile demonstrates the **Open-Endorsement Dossier** pattern, designed for
 
 ## Bibliography
 
-[[spec]]
+[1]. [KERI — Key Event Receipt Infrastructure](https://trustoverip.github.io/kswg-keri-specification/)
 
-[1]. KERI
-[1]: https://trustoverip.github.io/kswg-keri-specification/
+[2]. [ACDC — Authentic Chained Data Containers](https://trustoverip.github.io/kswg-acdc-specification/)
 
-[2]. ACDC
-[2]: https://trustoverip.github.io/kswg-acdc-specification/
+[3]. [CESR — Composable Event Streaming Representation](https://trustoverip.github.io/kswg-cesr-specification/)
 
-[3]. CESR
-[3]: https://trustoverip.github.io/kswg-cesr-specification/
+[4]. [Verifiable Voice Protocol](https://www.ietf.org/archive/id/draft-hardman-verifiable-voice-protocol-05.html)
 
-[4]. Verifiable Voice Protocol
-[4]: https://www.ietf.org/archive/id/draft-hardman-verifiable-voice-protocol-05.html
+[5]. Beard, R. W., Lawton, J., and Hadaegh, F. Y. 2001. A coordination architecture for spacecraft formation control. IEEE Transactions on Control Systems Technology 9, 6 (November 2001), 777–790. [https://doi.org/10.1109/87.960341](https://doi.org/10.1109/87.960341)
 
-[5]. Beard, Lawton, and Hadaegh
-[5]: Beard, R. W., Lawton, J., and Hadaegh, F. Y. 2001. A coordination architecture for spacecraft formation control. IEEE Transactions on Control Systems Technology 9, 6 (November 2001), 777–790. https://doi.org/10.1109/87.960341
+[6]. Oh, K.-K., Park, M.-C., and Ahn, H.-S. 2015. A survey of multi-agent formation control. Automatica 53 (March 2015), 424–440. [https://doi.org/10.1016/j.automatica.2014.10.022](https://doi.org/10.1016/j.automatica.2014.10.022)
 
-[6]. Oh, Park, and Ahn
-[6]: Oh, K.-K., Park, M.-C., and Ahn, H.-S. 2015. A survey of multi-agent formation control. Automatica 53 (March 2015), 424–440. https://doi.org/10.1016/j.automatica.2014.10.022
+[7]. Fax, J. A., and Murray, R. M. 2004. Information flow and cooperative control of vehicle formations. IEEE Transactions on Automatic Control 49, 9 (September 2004), 1465–1476. [https://doi.org/10.1109/TAC.2004.834433](https://doi.org/10.1109/TAC.2004.834433)
 
-[7]. Fax and Murray
-[7]: Fax, J. A., and Murray, R. M. 2004. Information flow and cooperative control of vehicle formations. IEEE Transactions on Automatic Control 49, 9 (September 2004), 1465–1476. https://doi.org/10.1109/TAC.2004.834433
+[8]. Hardman, D. ["Bytewise and Externalized SAIDs"](https://dhh1128.github.io/keri-tools). 2024.
 
-[8]. Hardman, D. "Bytewise and Externalized SAIDs." 2024.
-[8]: https://dhh1128.github.io/keri-tools
+[9]. Hardman, D. ["Foreign Artifact Credential"](https://dhh1128.github.io/keri-tools).
 
-[9]. Hardman, D. "Foreign Artifact Credential."
-[9]: https://dhh1128.github.io/keri-tools
-
-[10]. Sporny, M., Longley, D., Sabadello, M., Reed, D., Steele, O., and Allen, C., Eds. "Verifiable Credentials Data Model v2.0." W3C Recommendation.
-[10]: https://www.w3.org/TR/vc-data-model-2.0/
+[10]. Sporny, M., Longley, D., Sabadello, M., Reed, D., Steele, O., and Allen, C., Eds. ["Verifiable Credentials Data Model v2.0"](https://www.w3.org/TR/vc-data-model-2.0/). W3C Recommendation.

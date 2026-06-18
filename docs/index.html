@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Define a standard way to build verifiable dossiers of evidence.">
     <meta name="author" content="Trust over IP Foundation">
-    <meta property="spec-up-t:github-repo-info" content="trustoverip,kswg-dossier-specification,enc/terms">
+    <meta property="spec-up-t:github-repo-info" content="trustoverip,kswg-dossier-specification,enc/biblio">
     <link rel="icon" href="https://raw.githubusercontent.com/trustoverip/spec-up-t/refs/heads/master/src/install-from-boilerplate/boilerplate/static/favicon.ico" type="image/x-icon">
     <meta name="generator" content="Spec-Up-T">
     <title>Verifiable Dossiers</title>
@@ -401,7 +401,7 @@ customElements.define("slide-panels",class extends HTMLElement{static get observ
 <p>A critical distinction separates a dossier from a traditional verifiable credential. A credential typically makes an assertion about a specific subject, or issuee, conferring some right or attribute upon them. A dossier, by contrast, has no issuee. It has only an issuer—the entity that curates the collection. In this sense, a dossier functions more like a notarized affidavit than a passport; the issuer is making a formal, verifiable attestation about the composition and integrity of the evidence collection itself. This issuer-centric model is a fundamental shift from traditional subject-centric identity models.</p>
 <p>The primary purpose of a dossier is to empower decisions that are likely to be made based on the attested collection of evidence it includes. This contrasts with systems that generate proofs just-in-time in response to a specific verifier query. By pre-assembling evidence into a stable, long-lived, and verifiable container, the dossier enables efficient and scalable proof presentation in a wide variety of contexts.</p>
 <h3 id="relationship-to-keri-acdc-and-verifiable-credentials"><a class="toc-anchor d-print-none" href="#relationship-to-keri-acdc-and-verifiable-credentials">§</a> Relationship to KERI, ACDC, and Verifiable Credentials</h3>
-<p>The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures [[2]]. ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) [[1]]. The canonical data representation is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations [[3]].</p>
+<p>The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures <a href="https://trustoverip.github.io/kswg-acdc-specification/">2</a>. ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) <a href="https://trustoverip.github.io/kswg-keri-specification/">1</a>. The canonical data representation is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations <a href="https://trustoverip.github.io/kswg-cesr-specification/">3</a>.</p>
 <p>Within this ecosystem, the dossier should be distinguished from related concepts, including a conventional ACDC credential and a “bespoke ACDC”. A bespoke ACDC may also contain custom links to evidence, but it is a direct response to a specific verifier’s query. A dossier, by contrast, is a pre-curated collection assembled in anticipation of presenting to arbitrary parties at arbitrary points in time. Timing is a consequence of this difference, not the cause of it: a dossier is created in advance because it must be, given that its intended audience is unknown.</p>
 <p>The emergence of the dossier marks a step forward for decentralized identity. The ecosystem is moving beyond simple, atomic claims about a subject (the purpose of a traditional credential) to support curated narratives backed by a body of evidence. This reflects a more realistic understanding of trust: in practice, assurance often depends on evaluating many interrelated facts together. This shift establishes a new role within digital ecosystems: the “<a class="term-reference" href="#term:curator">curator</a>.” The curator may be an individual managing their own data, a lawyer building a case, a journalist protecting sources, or an automated service. Whatever its form, the curator is responsible for assembling and attesting evidence collections, and the dossier provides the formal data structure for that work.</p>
 <p>The following table clarifies these distinctions.</p>
@@ -448,7 +448,7 @@ customElements.define("slide-panels",class extends HTMLElement{static get observ
 </tbody>
 </table>
 </div><h3 id="relationship-to-w3c-verifiable-presentations"><a class="toc-anchor d-print-none" href="#relationship-to-w3c-verifiable-presentations">§</a> Relationship to W3C Verifiable Presentations</h3>
-<p>Readers familiar with the W3C Verifiable Credentials Data Model [[10]] may see a surface resemblance between a dossier and a Verifiable Presentation (VP). Both are cryptographically verifiable containers of evidence presented in support of a decision. They solve different problems, however, and the differences are worth making explicit.</p>
+<p>Readers familiar with the W3C Verifiable Credentials Data Model <a href="https://www.w3.org/TR/vc-data-model-2.0/">10</a> may see a surface resemblance between a dossier and a Verifiable Presentation (VP). Both are cryptographically verifiable containers of evidence presented in support of a decision. They solve different problems, however, and the differences are worth making explicit.</p>
 <div class="table-responsive-md"><table class="table table-striped table-bordered table-hover">
 <thead>
 <tr>
@@ -524,16 +524,11 @@ IN NO EVENT WILL ANY ToIP PARTY BE LIABLE TO ANY OTHER PARTY FOR LOST PROFITS OR
 <p>The following are in scope: normative requirements for dossier structure and schema; joint issuance, operator semantics, and revocation; privacy-preserving and graduated disclosure; and non-normative implementation guidance through use case profiles.</p>
 <p>The following are explicitly out of scope: transport or citation protocols for presenting dossiers at transaction time; storage and hosting requirements for dossier artifacts; the internal data formats of evidence items referenced by a dossier; and the KERI, ACDC, and CESR specifications on which this document depends.</p>
 <h2 id="normative-references"><a class="toc-anchor d-print-none" href="#normative-references">§</a> Normative references</h2>
-<p>[a]. IETF RFC-2119 Key words for use in RFCs to Indicate Requirement Levels
-[a]: <a href="https://www.rfc-editor.org/rfc/rfc2119.txt">https://www.rfc-editor.org/rfc/rfc2119.txt</a></p>
-<p>[b]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, “Key Event Receipt Infrastructure (KERI)”, January 2024.
-[b]: <a href="https://trustoverip.github.io/kswg-keri-specification/">https://trustoverip.github.io/kswg-keri-specification/</a></p>
-<p>[c]. Smith, S., Feairheller, P., Griffin, K., Ed., and Trust Over IP Foundation, “Authentic Chained Data Containers (ACDC)”, November 2023.
-[c]: <a href="https://trustoverip.github.io/kswg-acdc-specification/">https://trustoverip.github.io/kswg-acdc-specification/</a></p>
-<p>[d]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, “Composable Event Streaming Representation (CESR)”, November 2023.
-[d]: <a href="https://trustoverip.github.io/kswg-cesr-specification/">https://trustoverip.github.io/kswg-cesr-specification/</a></p>
-<p>[e]. JSON Schema Community, “JSON Schema Specification 2020-12”, June 2022.
-[e]: <a href="https://json-schema.org/specification">https://json-schema.org/specification</a>.</p>
+<p>[a]. <a href="https://www.rfc-editor.org/rfc/rfc2119.txt">IETF RFC-2119 Key words for use in RFCs to Indicate Requirement Levels</a></p>
+<p>[b]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, <a href="https://trustoverip.github.io/kswg-keri-specification/">“Key Event Receipt Infrastructure (KERI)”</a>, January 2024.</p>
+<p>[c]. Smith, S., Feairheller, P., Griffin, K., Ed., and Trust Over IP Foundation, <a href="https://trustoverip.github.io/kswg-acdc-specification/">“Authentic Chained Data Containers (ACDC)”</a>, November 2023.</p>
+<p>[d]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, <a href="https://trustoverip.github.io/kswg-cesr-specification/">“Composable Event Streaming Representation (CESR)”</a>, November 2023.</p>
+<p>[e]. JSON Schema Community, <a href="https://json-schema.org/specification">“JSON Schema Specification 2020-12”</a>, June 2022.</p>
 <!-- file: terms-and-definitions-intro.md -->
 <h2 id="terms-and-definitions"><a class="toc-anchor d-print-none" href="#terms-and-definitions">§</a> Terms and definitions</h2>
 <div id="terminology-section-start"></div>
@@ -592,11 +587,11 @@ IN NO EVENT WILL ANY ToIP PARTY BE LIABLE TO ANY OTHER PARTY FOR LOST PROFITS OR
 <!-- file: dossier-spec-body.md -->
 <h2 id="dossier-data-model-normative"><a class="toc-anchor d-print-none" href="#dossier-data-model-normative">§</a> Dossier Data Model (Normative)</h2>
 <h3 id="core-structure-the-dossier-as-an-acdc"><a class="toc-anchor d-print-none" href="#core-structure-the-dossier-as-an-acdc">§</a> Core Structure: The Dossier as an ACDC</h3>
-<p>A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification [[2]].</p>
+<p>A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification <a href="https://trustoverip.github.io/kswg-acdc-specification/">2</a>.</p>
 <h3 id="the-role-of-the-issuer"><a class="toc-anchor d-print-none" href="#the-role-of-the-issuer">§</a> The Role of the Issuer</h3>
 <p>The issuer of a dossier is the entity that curates the collection of <a class="term-reference" href="#term:evidence">evidence</a> and attests to its composition by digitally signing the container. The issuer’s signature makes a specific, verifiable assertion: at the time of issuance, the collection of evidence referenced within the dossier is the exact collection the issuer intended to present. The issuer does not necessarily attest to the veracity of the claims within the evidence, but rather to the integrity and composition of the collection itself.</p>
 <h3 id="the-edges-attribute-linking-to-evidence"><a class="toc-anchor d-print-none" href="#the-edges-attribute-linking-to-evidence">§</a> The Edges Attribute: Linking to Evidence</h3>
-<p>The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external <a class="term-reference" href="#term:evidence">evidence</a>. This graph is contained within an <a class="term-reference" href="#term:edges">edges</a> block (<code>e</code>), as defined in the ACDC specification [[2]]. This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.</p>
+<p>The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external <a class="term-reference" href="#term:evidence">evidence</a>. This graph is contained within an <a class="term-reference" href="#term:edges">edges</a> block (<code>e</code>), as defined in the ACDC specification <a href="https://trustoverip.github.io/kswg-acdc-specification/">2</a>. This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.</p>
 <p>A dossier MAY contain an unbounded number of edges, reflecting its core purpose of aggregating an arbitrary quantity and variety of evidence. The field names (keys) for these edges MAY be any valid JSON string, allowing issuers to provide semantically meaningful labels for the linked evidence (e.g.,
 “vettingCredential”, “forensicReport_01”, “tnAllocationProof”), as demonstrated in the Verifiable Voice Protocol (VVP) specification.</p>
 <h3 id="base-json-schema-definition"><a class="toc-anchor d-print-none" href="#base-json-schema-definition">§</a> Base JSON-Schema Definition</h3>
@@ -678,11 +673,11 @@ content. These formats cannot participate in authenticated data graphs using the
 standard ACDC saidification algorithm, because that algorithm assumes JSON
 content that can be canonicalized and rewritten.</p>
 <p>The solution is to give the artifact a cryptographic identity using one of the
-algorithms defined in the <em>Bytewise and Externalized SAIDs</em> specification [[8]],
+algorithms defined in the <em>Bytewise and Externalized SAIDs</em> specification <a href="https://dhh1128.github.io/keri-tools">8</a>,
 and then issue a <a class="term-reference" href="#term:foreign-artifact-wrapper">foreign-artifact-wrapper</a> that attests to the <a class="term-reference" href="#term:foreign-artifact">foreign-artifact</a>'s identity
 and provenance. The resulting wrapper is a standard ACDC and can be linked into
 a dossier edge like any other evidentum.</p>
-<p>Two algorithms are defined in [[8]] for saidifying opaque artifacts:</p>
+<p>Two algorithms are defined in <a href="https://dhh1128.github.io/keri-tools">8</a> for saidifying opaque artifacts:</p>
 <ul>
 <li>
 <p>The <strong>bytewise SAID algorithm</strong> (producing a <strong>bSAID</strong>) is appropriate for
@@ -691,7 +686,7 @@ for example, a JPEG whose Exif metadata can be updated, or a Markdown file
 where a comment can be inserted. The artifact receives an insertion point
 containing the SAID, making the identifier intrinsic to the artifact’s byte
 stream. A verifier can recover the SAID by scanning the raw bytes for the
-<code>SAID:</code> delimiter defined in [[8]].</p>
+<code>SAID:</code> delimiter defined in <a href="https://dhh1128.github.io/keri-tools">8</a>.</p>
 </li>
 <li>
 <p>The <strong>externalized SAID algorithm</strong> (producing an <strong>xSAID</strong>) is appropriate
@@ -699,7 +694,7 @@ for artifacts that cannot safely be rewritten after creation — for example,
 a compressed archive, an encrypted file, or a PDF whose cross-reference table
 would be invalidated by arbitrary byte modification. The SAID is carried in
 the filename under a constraint expressed inside the file content via the
-<code>XSAID:</code> delimiter defined in [[8]].</p>
+<code>XSAID:</code> delimiter defined in <a href="https://dhh1128.github.io/keri-tools">8</a>.</p>
 </li>
 </ul>
 <p>When neither algorithm is practical — for example, a data stream that was
@@ -717,10 +712,10 @@ requirements:</p>
 <li>Its <code>a</code> section MUST contain a <code>content_digest</code> field holding a
 CESR-encoded hash, and a <code>content_type</code> field holding an IANA MIME type
 string.</li>
-<li>The <code>content_digest</code> SHOULD be a bSAID or xSAID as defined in [[8]].</li>
+<li>The <code>content_digest</code> SHOULD be a bSAID or xSAID as defined in <a href="https://dhh1128.github.io/keri-tools">8</a>.</li>
 </ol>
 <p>A reference schema and example for a Foreign Artifact ACDC are published
-separately at [[9]]. Implementers MAY define specialized schemas that
+separately at <a href="https://dhh1128.github.io/keri-tools">9</a>. Implementers MAY define specialized schemas that
 extend the reference schema for domain-specific artifact types, provided the
 minimum requirements above are satisfied.</p>
 <h4 id="bridging-from-foreign-credential-ecosystems"><a class="toc-anchor d-print-none" href="#bridging-from-foreign-credential-ecosystems">§</a> Bridging from Foreign Credential Ecosystems</h4>
@@ -914,7 +909,7 @@ constraints applied to the underlying investigation.</p>
 <h2 id="joint-issuance"><a class="toc-anchor d-print-none" href="#joint-issuance">§</a> Joint issuance</h2>
 <p>A dossier may be assembled and signed by a single party. For example, an artist who wishes to collect cryptographic evidence of their creations may do so as a solo activity. However, many dossiers snapshot evidence contributions from multiple parties, and so represent a group work product that needs an aggregate approval mechanism. In such cases, signing the ACDC that references all the individual pieces of evidence is managed with joint issuance.</p>
 <h3 id="logic"><a class="toc-anchor d-print-none" href="#logic">§</a> Logic</h3>
-<p>Joint issuance is best understood not as a single, uniform approach to approval, but as a family or style of approval strategies. It maps onto the problem domain of coordinated control in multi-agent systems, which has been formally studied in robotics, AI, military science, and similar fields. Three variants of cooperative control are regularly mentioned in the literature [[5]] [[6]] [[7]]:</p>
+<p>Joint issuance is best understood not as a single, uniform approach to approval, but as a family or style of approval strategies. It maps onto the problem domain of coordinated control in multi-agent systems, which has been formally studied in robotics, AI, military science, and similar fields. Three variants of cooperative control are regularly mentioned in the literature <a href="https://doi.org/10.1109/87.960341">5</a> <a href="https://doi.org/10.1016/j.automatica.2014.10.022">6</a> <a href="https://doi.org/10.1109/TAC.2004.834433">7</a>:</p>
 <ul>
 <li>leader-follower</li>
 <li>behavior-based control</li>
@@ -1081,27 +1076,16 @@ constraints applied to the underlying investigation.</p>
 <li><strong>Verification:</strong> A verifier confirms the dossier is valid by observing that the required number of individual KELs contain the necessary seals. The coordinator may choose to finalize the dossier once the target count is reached, simplifying this check for third parties.</li>
 </ul>
 <h2 id="bibliography"><a class="toc-anchor d-print-none" href="#bibliography">§</a> Bibliography</h2>
-<p>[[spec]]</p>
-<p>[1]. KERI
-[1]: <a href="https://trustoverip.github.io/kswg-keri-specification/">https://trustoverip.github.io/kswg-keri-specification/</a></p>
-<p>[2]. ACDC
-[2]: <a href="https://trustoverip.github.io/kswg-acdc-specification/">https://trustoverip.github.io/kswg-acdc-specification/</a></p>
-<p>[3]. CESR
-[3]: <a href="https://trustoverip.github.io/kswg-cesr-specification/">https://trustoverip.github.io/kswg-cesr-specification/</a></p>
-<p>[4]. Verifiable Voice Protocol
-[4]: <a href="https://www.ietf.org/archive/id/draft-hardman-verifiable-voice-protocol-05.html">https://www.ietf.org/archive/id/draft-hardman-verifiable-voice-protocol-05.html</a></p>
-<p>[5]. Beard, Lawton, and Hadaegh
-[5]: Beard, R. W., Lawton, J., and Hadaegh, F. Y. 2001. A coordination architecture for spacecraft formation control. IEEE Transactions on Control Systems Technology 9, 6 (November 2001), 777–790. <a href="https://doi.org/10.1109/87.960341">https://doi.org/10.1109/87.960341</a></p>
-<p>[6]. Oh, Park, and Ahn
-[6]: Oh, K.-K., Park, M.-C., and Ahn, H.-S. 2015. A survey of multi-agent formation control. Automatica 53 (March 2015), 424–440. <a href="https://doi.org/10.1016/j.automatica.2014.10.022">https://doi.org/10.1016/j.automatica.2014.10.022</a></p>
-<p>[7]. Fax and Murray
-[7]: Fax, J. A., and Murray, R. M. 2004. Information flow and cooperative control of vehicle formations. IEEE Transactions on Automatic Control 49, 9 (September 2004), 1465–1476. <a href="https://doi.org/10.1109/TAC.2004.834433">https://doi.org/10.1109/TAC.2004.834433</a></p>
-<p>[8]. Hardman, D. “Bytewise and Externalized SAIDs.” 2024.
-[8]: <a href="https://dhh1128.github.io/keri-tools">https://dhh1128.github.io/keri-tools</a></p>
-<p>[9]. Hardman, D. “Foreign Artifact Credential.”
-[9]: <a href="https://dhh1128.github.io/keri-tools">https://dhh1128.github.io/keri-tools</a></p>
-<p>[10]. Sporny, M., Longley, D., Sabadello, M., Reed, D., Steele, O., and Allen, C., Eds. “Verifiable Credentials Data Model v2.0.” W3C Recommendation.
-[10]: <a href="https://www.w3.org/TR/vc-data-model-2.0/">https://www.w3.org/TR/vc-data-model-2.0/</a></p>
+<p>[1]. <a href="https://trustoverip.github.io/kswg-keri-specification/">KERI — Key Event Receipt Infrastructure</a></p>
+<p>[2]. <a href="https://trustoverip.github.io/kswg-acdc-specification/">ACDC — Authentic Chained Data Containers</a></p>
+<p>[3]. <a href="https://trustoverip.github.io/kswg-cesr-specification/">CESR — Composable Event Streaming Representation</a></p>
+<p>[4]. <a href="https://www.ietf.org/archive/id/draft-hardman-verifiable-voice-protocol-05.html">Verifiable Voice Protocol</a></p>
+<p>[5]. Beard, R. W., Lawton, J., and Hadaegh, F. Y. 2001. A coordination architecture for spacecraft formation control. IEEE Transactions on Control Systems Technology 9, 6 (November 2001), 777–790. <a href="https://doi.org/10.1109/87.960341">https://doi.org/10.1109/87.960341</a></p>
+<p>[6]. Oh, K.-K., Park, M.-C., and Ahn, H.-S. 2015. A survey of multi-agent formation control. Automatica 53 (March 2015), 424–440. <a href="https://doi.org/10.1016/j.automatica.2014.10.022">https://doi.org/10.1016/j.automatica.2014.10.022</a></p>
+<p>[7]. Fax, J. A., and Murray, R. M. 2004. Information flow and cooperative control of vehicle formations. IEEE Transactions on Automatic Control 49, 9 (September 2004), 1465–1476. <a href="https://doi.org/10.1109/TAC.2004.834433">https://doi.org/10.1109/TAC.2004.834433</a></p>
+<p>[8]. Hardman, D. <a href="https://dhh1128.github.io/keri-tools">“Bytewise and Externalized SAIDs”</a>. 2024.</p>
+<p>[9]. Hardman, D. <a href="https://dhh1128.github.io/keri-tools">“Foreign Artifact Credential”</a>.</p>
+<p>[10]. Sporny, M., Longley, D., Sabadello, M., Reed, D., Steele, O., and Allen, C., Eds. <a href="https://www.w3.org/TR/vc-data-model-2.0/">“Verifiable Credentials Data Model v2.0”</a>. W3C Recommendation.</p>
 
                 </article>
 
@@ -1220,13 +1204,13 @@ constraints applied to the underlying investigation.</p>
                 <div id="build-info" class="small text-muted">
                     <div class="d-flex align-items-center mb-1">
                         <i class="bi bi-calendar-event me-2"></i>
-                        <time class="timestamp" datetime="2026-06-18T18:20:31.150Z">
-                            Generated: 2026-06-18T18:20:31.150Z
+                        <time class="timestamp" datetime="2026-06-18T18:54:53.037Z">
+                            Generated: 2026-06-18T18:54:53.037Z
                         </time>
                     </div>
                     <div class="d-flex align-items-center mb-1">
                         <i class="bi bi-signpost-split me-2"></i>
-                        <span>Source branch: <strong>enc/terms</strong></span>
+                        <span>Source branch: <strong>enc/biblio</strong></span>
                     </div>
                     <div class="d-flex align-items-center mb-1">
                         <i class="bi bi-box me-2"></i>

@@ -68,7 +68,7 @@ A critical distinction separates a dossier from a traditional verifiable credent
 The primary purpose of a dossier is to empower decisions that are likely to be made based on the attested collection of evidence it includes. This contrasts with systems that generate proofs just-in-time in response to a specific verifier query. By pre-assembling evidence into a stable, long-lived, and verifiable container, the dossier enables efficient and scalable proof presentation in a wide variety of contexts.
 
 ### Relationship to KERI, ACDC, and Verifiable Credentials
-The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures [[2]]. ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) [[1]]. The canonical data representation is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations [[3]].
+The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures [2](https://trustoverip.github.io/kswg-acdc-specification/). ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) [1](https://trustoverip.github.io/kswg-keri-specification/). The canonical data representation is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations [3](https://trustoverip.github.io/kswg-cesr-specification/).
 
 Within this ecosystem, the dossier should be distinguished from related concepts, including a conventional ACDC credential and a "bespoke ACDC". A bespoke ACDC may also contain custom links to evidence, but it is a direct response to a specific verifier's query. A dossier, by contrast, is a pre-curated collection assembled in anticipation of presenting to arbitrary parties at arbitrary points in time. Timing is a consequence of this difference, not the cause of it: a dossier is created in advance because it must be, given that its intended audience is unknown.
 
@@ -86,7 +86,7 @@ Content Focus | Graph of external evidence | Attributes of the issuee | Subset o
 
 ### Relationship to W3C Verifiable Presentations
 
-Readers familiar with the W3C Verifiable Credentials Data Model [[10]] may see a surface resemblance between a dossier and a Verifiable Presentation (VP). Both are cryptographically verifiable containers of evidence presented in support of a decision. They solve different problems, however, and the differences are worth making explicit.
+Readers familiar with the W3C Verifiable Credentials Data Model [10](https://www.w3.org/TR/vc-data-model-2.0/) may see a surface resemblance between a dossier and a Verifiable Presentation (VP). Both are cryptographically verifiable containers of evidence presented in support of a decision. They solve different problems, however, and the differences are worth making explicit.
 
 Aspect | Dossier (ACDC-based) | Verifiable Presentation (W3C VC)
 --- | --- | ---
@@ -145,18 +145,13 @@ The following are explicitly out of scope: transport or citation protocols for p
 
 ## Normative references
 
-[a]. IETF RFC-2119 Key words for use in RFCs to Indicate Requirement Levels
-[a]: https://www.rfc-editor.org/rfc/rfc2119.txt
+[a]. [IETF RFC-2119 Key words for use in RFCs to Indicate Requirement Levels](https://www.rfc-editor.org/rfc/rfc2119.txt)
 
-[b]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, "Key Event Receipt Infrastructure (KERI)", January 2024.
-[b]: https://trustoverip.github.io/kswg-keri-specification/
+[b]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, ["Key Event Receipt Infrastructure (KERI)"](https://trustoverip.github.io/kswg-keri-specification/), January 2024.
 
-[c]. Smith, S., Feairheller, P., Griffin, K., Ed., and Trust Over IP Foundation, "Authentic Chained Data Containers (ACDC)", November 2023.
-[c]: https://trustoverip.github.io/kswg-acdc-specification/
+[c]. Smith, S., Feairheller, P., Griffin, K., Ed., and Trust Over IP Foundation, ["Authentic Chained Data Containers (ACDC)"](https://trustoverip.github.io/kswg-acdc-specification/), November 2023.
 
-[d]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, "Composable Event Streaming Representation (CESR)", November 2023.
-[d]: https://trustoverip.github.io/kswg-cesr-specification/
+[d]. Smith, S., Griffin, K., Ed., and Trust Over IP Foundation, ["Composable Event Streaming Representation (CESR)"](https://trustoverip.github.io/kswg-cesr-specification/), November 2023.
 
-[e]. JSON Schema Community, "JSON Schema Specification 2020-12", June 2022.
-[e]: https://json-schema.org/specification.
+[e]. JSON Schema Community, ["JSON Schema Specification 2020-12"](https://json-schema.org/specification), June 2022.
 
