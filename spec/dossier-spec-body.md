@@ -100,7 +100,7 @@ content that can be canonicalized and rewritten.
 
 The solution is to give the artifact a cryptographic identity using one of the
 algorithms defined in the *Bytewise and Externalized SAIDs* specification [[8]],
-and then issue a Foreign Artifact ACDC that attests to the artifact's identity
+and then issue a [[ref: foreign-artifact-wrapper, Foreign Artifact ACDC]] that attests to the [[ref: foreign-artifact, artifact]]'s identity
 and provenance. The resulting wrapper is a standard ACDC and can be linked into
 a dossier edge like any other evidentum.
 
@@ -131,7 +131,7 @@ In all cases, the CESR encoding of `content_digest` is self-describing: the
 primitive code identifies the hash algorithm, so no separate algorithm field
 is required.
 
-A conforming Foreign Artifact wrapper MUST satisfy the following minimum
+A conforming [[ref: foreign-artifact-wrapper, Foreign Artifact wrapper]] MUST satisfy the following minimum
 requirements:
 
 1. It MUST be a valid ACDC with no issuee.
@@ -149,11 +149,11 @@ minimum requirements above are satisfied.
 
 Where the non-ACDC material is itself a verifiable credential from another
 ecosystem — such as a W3C Verifiable Credential or an ISO mDL — a different
-wrapping strategy applies. In this case a designated bridging party obtains
+wrapping strategy applies. In this case a designated [[ref: bridging-party, bridging party]] obtains
 the foreign credential, verifies it according to its native rules and policies,
 and issues a new ACDC — the bridge wrapper — that attests: "I, the bridging
 party, successfully verified the attached foreign credential on date X according
-to policy Y." The bridge wrapper is then linked into the dossier using the
+to policy Y." The [[ref: bridge-wrapper, bridge wrapper]] is then linked into the dossier using the
 standard ACDC-native mechanism.
 
 This pattern transforms the problem of verifying a foreign format into the
@@ -197,9 +197,9 @@ To manage these state transitions, dossiers MUST use **Annotation Edges**. An an
 
 Many dossiers require evidence of dynamic states, such as a bank balance, a credit score, or a current employment status. Direct links to live APIs are unverifiable in a static context. To include dynamic data, issuers MUST use **Temporal Pinning**.
 
-This process requires the assembler (or a trusted "oracle" service) to:
+This process requires the [[ref: assembler]] (or a trusted "[[ref: oracle]]" service) to:
 1. Observe the dynamic state at a specific instant (`Time T`).
-2. Wrap that observation in a signed ACDC (an "Observation Attestation").
+2. Wrap that observation in a signed ACDC (an "[[ref: observation-attestation, Observation Attestation]]").
 3. Anchor that ACDC in a KEL.
 
 The dossier then links to this static, timestamped Observation Attestation. This effectively "freezes" the data stream at a specific block height, allowing the dossier to assert, "The borrower had $50,000 in this account at the exact moment this dossier was assembled," rather than "The borrower has $50,000 now."
@@ -208,11 +208,11 @@ The dossier then links to this static, timestamped Observation Attestation. This
 
 Because dossiers are designed to be stable, long-lived, and potentially large data structures, they are generally not transmitted in their entirety within real-time communication protocols. Instead, they are cited.
 
-A citation is a reference that allows a verifier to locate and retrieve the full dossier. The normative requirement for a dossier citation is that it MUST be a resolvable identifier that enables a verifier to fetch the complete and unmodified dossier ACDC. The canonical implementation of this is the Out-of-Band Invitation (OOBI) URL used in the evd (evidence) claim of a VVP passport. An OOBI is a specialized URL that points to a resource serving the ACDC and its associated KERI proofs.
+A [[ref: citation]] is a reference that allows a verifier to locate and retrieve the full dossier. The normative requirement for a dossier citation is that it MUST be a resolvable identifier that enables a verifier to fetch the complete and unmodified dossier ACDC. The canonical implementation of this is the Out-of-Band Invitation (OOBI) URL used in the evd (evidence) claim of a VVP passport. An OOBI is a specialized URL that points to a resource serving the ACDC and its associated KERI proofs.
 
 ### Verification: Algorithm for Validation
 
-The verification process for a dossier requires a citation and a referenceTime as inputs. To support joint issuance, the algorithm follows these steps:
+The verification process for a dossier requires a citation and a [[ref: reference-time, referenceTime]] as inputs. To support joint issuance, the algorithm follows these steps:
 
 1. Fetch dossier: resolve the citation to retrieve the dossier ACDC.
 
@@ -357,7 +357,7 @@ The following operators are defined to support the logic of joint issuance withi
 
 * `M`: a [[ref: threshold operator]] that declares that issuance is accomplished by satisfying an endorser count. This number MUST be expressed via a corresponding field on the edge, `m`. The presence of this operator triggers a requirement that the set of corresponding signers MUST be represented in the edges of the edge group to which the operator is attached. The `M` operator also allows valid *potential* signers (as opposed to *actual* signers in the edge) to be enumerated in advance. When they are, the enumeration MUST occur in the attributes (root `a` object) section of the ACDC, and MUST consist of an array of AIDs. If a field named `mgrp` appears as a property on the same edge as `M`, it MUST name the field in the attributes section where this enumeration occurs. If `mgrp` does not appear as a property on `M`'s edge group, then the enumeration of potential signers MUST be given in a field named `mgrp` in the attributes section. The `M` operator with enumerated potential signers thus embodies an *m of n* approval pattern: `m` supplies the threshold, and the cardinality of potential signers enumerated in `mgrp` provides the logical upper bound *n*. An example is a judicial decision jointly issued by *m* of *n* justices, where the AIDs of the judges are enumerated and *m* constitutes a majority. An `M` operator that does not enumerate valid potential signers MAY instead be combined with the `Q` operator to model an unbounded number of potential signers who must still be qualified in some way; see below.
 * `RM`: a [[ref: revocation operator]] that declares that revocation is accomplished by satisfying a revoker count. `RM` has parallel semantics to `M`, but its corresponding numeric field on the edge is `rm`, and its potential revokers are enumerated in an `rmgrp` field in the attributes section, or in an attribute field with the name specified in the `rmgrp` field on the edge. This flexibility allows the set of revokers to be identical to the set of endorsers used for `M`, to overlap that set, or to be entirely disjoint, and allows the threshold for revocation to differ from the threshold for issuance.
-* `Q`: A qualification operator that determines a standard of proof that signers MUST meet. When this operator is present, the edge MUST also contain a `qschema` property that describes the proof that must exist, plus a `qev` array that enumerates edges of evidence presented by each signer as proof of qualification.
+* `Q`: A [[ref: qualification-operator, qualification operator]] that determines a standard of proof that signers MUST meet. When this operator is present, the edge MUST also contain a `qschema` property that describes the proof that must exist, plus a `qev` array that enumerates edges of evidence presented by each signer as proof of qualification.
 * `FIN`: a [[ref: finalization operator]] that signals whether a verifier should expect a finalization event in a KEL. Recording a finalization event in the KEL allows verifiers to predict where aggregate evidence may be collected for easy review. Without it, a verifier must collect evidence of joint issuance signatures from disparate locations.
 
 ### Finalization
@@ -379,7 +379,7 @@ Revocation logic in a joint issuance may be defined independently of issuance lo
 
 A dossier is intentionally heavy. It may be assembled once and signed jointly by many parties, may carry a graph of arbitrarily many evidence items, and may require a verifier to fetch and validate every node in that graph against multiple KELs. This cost is acceptable because a dossier is designed for reuse: curation happens once, and the resulting artifact serves as an authoritative reference for many later transactions, verifiers, and decisions.
 
-In transactional protocols, however, the dossier itself is rarely transmitted. Sending a multi-kilobyte ACDC and requiring full recursive verification on every call is impractical for real-time use cases such as a phone call, a checkout step, or an API request. Instead, the transactional payload carries a lightweight derivative that references the dossier. The dossier remains the primary, persistent artifact; the derivative is short-lived, single-purpose, and cheap to produce and validate.
+In transactional protocols, however, the dossier itself is rarely transmitted. Sending a multi-kilobyte ACDC and requiring full recursive verification on every call is impractical for real-time use cases such as a phone call, a checkout step, or an API request. Instead, the transactional payload carries a lightweight [[ref: derivative]] that references the dossier. The dossier remains the primary, persistent artifact; the derivative is short-lived, single-purpose, and cheap to produce and validate.
 
 This specification recognizes two derivative forms:
 
@@ -508,7 +508,7 @@ The Mortgage Qualification profile illustrates the **Snapshot Dossier** pattern,
 
 * **Goal:** Prove the state of a changing system at a specific point in time.
 * **Key Concept: Temporal Pinning.** A dossier cannot simply link to a bank's API, as the balance changes. It must link to a static artifact.
-* **Mechanism:** This pattern employs the **Oracle** or **Observer** role. The assembler (or a trusted third-party service) queries the dynamic data source at `Time T`. This observation is then wrapped in a signed ACDC (an "Observation Attestation") that effectively says, "I observed Account X having Balance Y at Block Height Z." The dossier links to this static attestation. This converts a stream of data into a verifiable snapshot, allowing a loan officer to verify "Funds Available" at the exact moment of the application.
+* **Mechanism:** This pattern employs the **[[ref: oracle, Oracle]]** or **[[ref: oracle, Observer]]** role. The assembler (or a trusted third-party service) queries the dynamic data source at `Time T`. This observation is then wrapped in a signed ACDC (an "Observation Attestation") that effectively says, "I observed Account X having Balance Y at Block Height Z." The dossier links to this static attestation. This converts a stream of data into a verifiable snapshot, allowing a loan officer to verify "Funds Available" at the exact moment of the application.
 
 ### Clinical Trials: The Predicate Dossier
 
