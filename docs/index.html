@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Define a standard way to build verifiable dossiers of evidence.">
     <meta name="author" content="Trust over IP Foundation">
-    <meta property="spec-up-t:github-repo-info" content="trustoverip,kswg-dossier-specification,schema-base-dossier">
+    <meta property="spec-up-t:github-repo-info" content="trustoverip,kswg-dossier-specification,try1">
     <link rel="icon" href="https://raw.githubusercontent.com/trustoverip/spec-up-t/refs/heads/master/src/install-from-boilerplate/boilerplate/static/favicon.ico" type="image/x-icon">
     <meta name="generator" content="Spec-Up-T">
     <title>Verifiable Dossiers</title>
@@ -60,75 +60,7 @@ customElements.define("slide-panels",class extends HTMLElement{static get observ
           
         
     <script>const allXTrefs = {
-  "xtrefs": [
-    {
-      "externalSpec": "KERISuite",
-      "term": "edge",
-      "trefAliases": [
-        "edge",
-        "edges"
-      ],
-      "xrefAliases": [],
-      "firstTrefAlias": "edge",
-      "sourceFiles": [
-        {
-          "file": "edge.md",
-          "type": "tref"
-        }
-      ],
-      "repoUrl": "https://github.com/trustoverip/kerisuite-glossary",
-      "terms_dir": "spec/terms-definitions",
-      "owner": "trustoverip",
-      "repo": "kerisuite-glossary",
-      "site": null,
-      "branch": "SpecUpT",
-      "avatarUrl": null,
-      "ghPageUrl": "https://trustoverip.github.io/kerisuite-glossary/",
-      "commitHash": "ab23372198bed5cda8bc0ac0289cead7a06d3320",
-      "content": "<dd>a top-level field map within an ACDC that provides edges that connect to other ACDCs, forming a labeled property graph (LPG).</dd>\n<dd>Source: Dr. S. Smith</dd>\n<dd>More in <a href=\"https://weboftrust.github.io/WOT-terms/docs/glossary/edge\">extended KERI glossary</a></dd>",
-      "classes": [
-        "term-local"
-      ],
-      "source": "xref",
-      "termId": "term:edge",
-      "lastUpdated": "2026-06-30T22:28:52.017Z"
-    },
-    {
-      "externalSpec": "KERISuite",
-      "term": "operator",
-      "trefAliases": [
-        "operator"
-      ],
-      "xrefAliases": [],
-      "sourceFiles": [
-        {
-          "file": "operator.md",
-          "type": "tref"
-        },
-        {
-          "file": "threshold-operator.md",
-          "type": "tref"
-        }
-      ],
-      "repoUrl": "https://github.com/trustoverip/kerisuite-glossary",
-      "terms_dir": "spec/terms-definitions",
-      "owner": "trustoverip",
-      "repo": "kerisuite-glossary",
-      "site": null,
-      "branch": "SpecUpT",
-      "avatarUrl": null,
-      "ghPageUrl": "https://trustoverip.github.io/kerisuite-glossary/",
-      "commitHash": "ab23372198bed5cda8bc0ac0289cead7a06d3320",
-      "content": "<dd>\n<p>an optional field map in the Edge section that enables expression of the edge logic on edge subgraph as either a unary operator on the edge itself or an m-ary operator on the edge group.</p>\n</dd>\n<dd>\n<p>Source: Dr. S.Smith</p>\n</dd>\n<dd>\n<p>More in <a href=\"https://weboftrust.github.io/WOT-terms/docs/glossary/operator\">extended KERI glossary</a></p>\n</dd>",
-      "classes": [
-        "term-local"
-      ],
-      "source": "xref",
-      "termId": "term:operator",
-      "lastUpdated": "2026-06-30T22:28:52.017Z",
-      "firstTrefAlias": "operator"
-    }
-  ]
+  "xtrefs": []
 };</script>
 
     <!-- Template based on https://getbootstrap.com/docs/5.3/examples/dashboard/ -->
@@ -332,9 +264,10 @@ customElements.define("slide-panels",class extends HTMLElement{static get observ
                     </div>
                     <div id="toc" class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto">
                         <ul class="toc">
+<li><a href="#abstract">Abstract</a></li>
 <li><a href="#introduction">Introduction</a>
 <ul>
-<li><a href="#the-challenge-of-verifiable-evidence-aggregation">The Challenge of Verifiable Evidence Aggregation</a></li>
+<li><a href="#whats-the-challenge-in-aggregating-verifiable-evidence">What’s the challenge in aggregating Verifiable Evidence?</a></li>
 <li><a href="#evidence-lifespans-and-verification-timing">Evidence Lifespans and Verification Timing</a></li>
 <li><a href="#introducing-the-dossier-an-issuer-centric-evidence-container">Introducing the Dossier: An Issuer-Centric Evidence Container</a></li>
 <li><a href="#relationship-to-keri-acdc-and-verifiable-credentials">Relationship to KERI, ACDC, and Verifiable Credentials</a></li>
@@ -445,36 +378,40 @@ customElements.define("slide-panels",class extends HTMLElement{static get observ
 </ul>
 <p><strong>Editors:</strong></p>
 <p><strong>Contributors:</strong></p>
+<ul>
+<li><a href="https://github.com/henkvancann">Henk van Cann</a>, <a href="https://keri.foundation/">KERI Foundation</a></li>
+</ul>
 <dl>
 <dt data-sourcefile="dossier-spec-head.md"><strong>Participate:</strong></dt>
 <dd><a href="https://github.com/trustoverip/kswg-dossier-specification">GitHub repo</a></dd>
 <dd><a href="https://github.com/trustoverip/kswg-dossier-specification/commits/main">Commit history</a></dd>
 </dl>
-<p><strong>Abstract</strong></p>
-<p>This document provides a normative definition for a dossier, a data structure for compiling and attesting to collections of verifiable evidence. A dossier is an Authentic Chained Data Container (ACDC) issued by the party assembling the evidence, functioning as a cryptographically verifiable affidavit rather than a traditional credential. It enables the creation of arbitrarily rich, tamper-evident data graphs of evidence. This specification defines the dossier’s data model, its operational lifecycle of curation, citation, and verification, and its underlying security and privacy mechanisms, including graduated disclosure. It provides implementation guidance through detailed use cases in telecommunications, law enforcement, and investigative journalism.</p>
+<h2 id="abstract"><a class="toc-anchor d-print-none" href="#abstract">§</a> Abstract</h2>
+<p>This document provides a normative definition for a dossier, a data structure for compiling and attesting to collections of verifiable evidence. A dossier is an Authentic Chained Data Container (ACDC) issued by the party assembling the evidence, functioning as a cryptographically verifiable affidavit rather than a traditional credential. It enables the creation of arbitrarily rich, tamper-evident data graphs of evidence. This specification defines the dossier’s data model, its operational lifecycle of curation, citation, and verification, and its underlying security and privacy mechanisms, including graduated disclosure and contextual display. It provides implementation guidance through detailed use cases in telecommunications, law enforcement, and investigative journalism.</p>
 <h2 id="introduction"><a class="toc-anchor d-print-none" href="#introduction">§</a> Introduction</h2>
-<h3 id="the-challenge-of-verifiable-evidence-aggregation"><a class="toc-anchor d-print-none" href="#the-challenge-of-verifiable-evidence-aggregation">§</a> The Challenge of Verifiable Evidence Aggregation</h3>
-<p>In both the physical and digital realms, critical decisions are rarely based on a single piece of information. Instead, decision makers rely on a collection of disparate evidence, curated to form a coherent whole. A loan officer assembles a file of financial statements, credit reports, and employment verifications to assess creditworthiness; a law enforcement official compiles a case file containing forensic reports, witness statements, and crime scene documentation to build a case. The confidence of the decision depends not only on the validity of the individual pieces of evidence but also on the integrity of the collection itself.</p>
+<h3 id="whats-the-challenge-in-aggregating-verifiable-evidence"><a class="toc-anchor d-print-none" href="#whats-the-challenge-in-aggregating-verifiable-evidence">§</a> What’s the challenge in aggregating Verifiable Evidence?</h3>
+<p>In both the physical and digital realms, critical decisions are rarely based on a single piece of information. Instead, decision makers rely on a collection of disparate evidence; often curated to form a coherent whole. For example, a loan officer assembles a file of financial statements, credit reports, and employment verifications to assess creditworthiness. Another example is a law enforcement official, who compiles a case file containing forensic reports, witness statements, and crime scene documentation to build a case. The confidence of the decision depends not only on the validity of the individual pieces of evidence but also on the integrity of the collection itself. {@DH <em>integrity</em> needs explanation. do you mean pieces can be valid but inconsistent as a whole, do you mean incompleteness, etc}</p>
 <p>In the digital world, this aggregation process presents serious challenges. The core problem is the absence of a standardized, cryptographically secure method that aggregates diverse pieces of evidence, attests to the integrity of the collection, and manages its lifecycle in a decentralized, interoperable way. Existing systems for evidence management are often siloed within proprietary platforms, dependent on centralized trusted parties, or lack the cryptographic guarantees necessary for high-assurance environments. This fragmentation creates friction, inhibits interoperability across domains (e.g., between different jurisdictions or industries), and introduces single points of failure that can be compromised or become unavailable.</p>
 <h3 id="evidence-lifespans-and-verification-timing"><a class="toc-anchor d-print-none" href="#evidence-lifespans-and-verification-timing">§</a> Evidence Lifespans and Verification Timing</h3>
 <p>A second observation shapes the dossier design: the evidence underlying real-world decisions has wildly different lifespans, and the parties who later verify that evidence are usually not in contact with the signer at the moment of verification.</p>
 <p>Some evidence is <strong>temporary</strong>. A movie ticket, a JSON Web Token, a browser session cookie, or a transient network message carries authority for seconds or minutes — just long enough to complete a single interaction in a controlled environment.</p>
 <p>Other evidence is <strong>changed occasionally</strong>. A PIN, a password, a credit-card number, an X.509 certificate, or a magnetic key card carries a secret that the holder rotates on a scale of days to months as it expires or is suspected of compromise.</p>
-<p>A third class is <strong>effectively permanent</strong>. A birth certificate, a passport, articles of incorporation, a fingerprint or iris template, or a chain-of-custody record on a piece of forensic evidence anchors a fact that is meant to be relied on for years or decades.</p>
-<p>A dossier inhabits the permanent end of this spectrum. It snapshots evidence that the issuer expects to remain meaningful and verifiable long after issuance, in front of audiences and against questions the issuer cannot anticipate at signing time. Verifiers may consume a dossier indirectly: an auditor reviewing a loan years after funding, a court evaluating a chain of custody decades after collection, an insurance adjuster reconstructing facts about an incident years before the claim. None of these verifiers communicates with the issuer at the moment of verification.</p>
-<p>This asynchronous, indirect verification model has three direct consequences for the dossier design:</p>
+<p>A third class is <strong>effectively permanent</strong>. A birth certificate, a passport, articles of incorporation, a fingerprint or iris template, or a chain-of-custody record on a piece of forensic evidence, anchors a fact that is meant to be relied on for years or decades.</p>
+<p>A dossier inhabits the permanent end of this spectrum. {@DH poetic, but what do want to say?}  It snapshots evidence that the issuer expects to remain meaningful and verifiable long after issuance, in front of audiences and against questions the issuer cannot anticipate at signing time. Verifiers may consume a dossier indirectly: an auditor reviewing a loan years after funding, a court evaluating a chain of custody decades after collection, an insurance adjuster reconstructing facts about an incident years before the claim. None of these verifiers communicates with the issuer at the moment of verification.</p>
+<p>This asynchronous, indirect verification model has three direct consequences for the dossier design to facilitate the ad hoc timing of verification:
+{@DH I’m not sure about my addition above, but I think <em>verfication timing</em> should be mentioned, cuz it’s prominent in your paragraph title}</p>
 <ol>
 <li><strong>The artifact must stand alone.</strong> Verification cannot depend on a live channel back to the issuer at verification time.</li>
-<li><strong>Recency and freshness vary per evidentum.</strong> A bank balance referenced in a mortgage dossier may need to be less than a week old; an LEI vetting may be acceptable up to a year old; a passport scan may be acceptable for the document’s full validity period. The dossier model accommodates these mixed timelines through per-edge metadata and Temporal Pinning, not through a single global expiry.</li>
+<li><strong>Recency and freshness vary per <a class="term-reference" href="#term:evidentum">evidentum</a>.</strong> A bank balance referenced in a mortgage dossier may need to be less than a week old; an LEI vetting may be acceptable up to a year old; a passport scan may be acceptable for the document’s full validity period. The dossier model accommodates these mixed timelines through per-edge metadata and <a class="term-reference" href="#term:temporal-pinning">temporal-pinning</a>, not through a single global expiry.</li>
 <li><strong>State must be reconstructible at an arbitrary historical point.</strong> Verification at time T requires the key state, revocation state, and evidence state that were effective at T — not necessarily at the moment of verification. This is supported by KERI’s historical-query capability over its KELs.</li>
 </ol>
 <h3 id="introducing-the-dossier-an-issuer-centric-evidence-container"><a class="toc-anchor d-print-none" href="#introducing-the-dossier-an-issuer-centric-evidence-container">§</a> Introducing the Dossier: An Issuer-Centric Evidence Container</h3>
-<p>This specification introduces the dossier as a solution to these challenges. A <a class="term-reference" href="#term:dossier">dossier</a> is formally defined as an Authentic Chained Data Container (ACDC) that references an arbitrarily rich collection of signed evidence and is issued by the party that assembles it. It is a container designed to create a verifiable data graph from evidentiary artifacts.</p>
-<p>A critical distinction separates a dossier from a traditional verifiable credential. A credential typically makes an assertion about a specific subject, or issuee, conferring some right or attribute upon them. A dossier, by contrast, has no issuee. It has only an issuer—the entity that curates the collection. In this sense, a dossier functions more like a notarized affidavit than a passport; the issuer is making a formal, verifiable attestation about the composition and integrity of the evidence collection itself. This issuer-centric model is a fundamental shift from traditional subject-centric identity models.</p>
-<p>The primary purpose of a dossier is to empower decisions that are likely to be made based on the attested collection of evidence it includes. This contrasts with systems that generate proofs just-in-time in response to a specific verifier query. By pre-assembling evidence into a stable, long-lived, and verifiable container, the dossier enables efficient and scalable proof presentation in a wide variety of contexts.</p>
+<p @dh="" could="" you="" reword="" averifiabledatagraphfromevidentiaryartifacts.="">This specification introduces the dossier as a solution to these challenges. A <a class="term-reference" href="#term:dossier">dossier</a> is formally defined as an Authentic Chained Data Container (ACDC) that references an arbitrarily rich collection of signed evidence and is issued by the party that assembles it. It is a container designed to create a verifiable data graph from evidentiary artifacts.</p>
+<p @dh="" this="" text="" block="" should="" be="" in="" the="" next="" paragraph?="">A critical distinction separates a dossier from a traditional verifiable credential. A credential typically makes an assertion about a specific subject, or issuee, conferring some right or attribute upon them. A dossier, by contrast, has no issuee. It has only an issuer—the entity that curates the collection. In this sense, a dossier functions more like a notarized affidavit than a passport; the issuer is making a formal, verifiable attestation about the composition and integrity of the evidence collection itself. This issuer-centric model is a fundamental shift from traditional subject-centric identity models.</p>
+<p>The primary purpose of a dossier is to empower decisions. Decision making becomes verifiable if it’s based on the attested collection of evidence the dossier includes. This contrasts with systems that generate proofs just-in-time in response to a specific verifier query. By pre-assembling evidence into a stable, long-lived, and verifiable container, the dossier enables efficient and scalable proof presentation in a wide variety of contexts.</p>
 <h3 id="relationship-to-keri-acdc-and-verifiable-credentials"><a class="toc-anchor d-print-none" href="#relationship-to-keri-acdc-and-verifiable-credentials">§</a> Relationship to KERI, ACDC, and Verifiable Credentials</h3>
-<p>The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures [[2]]. ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) [[1]]. The canonical data representation is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations [[3]].</p>
-<p>Within this ecosystem, the dossier should be distinguished from related concepts, including a conventional ACDC credential and a “bespoke ACDC”. A bespoke ACDC may also contain custom links to evidence, but it is a direct response to a specific verifier’s query. A dossier, by contrast, is a pre-curated collection assembled in anticipation of presenting to arbitrary parties at arbitrary points in time. Timing is a consequence of this difference, not the cause of it: a dossier is created in advance because it must be, given that its intended audience is unknown.</p>
+<p>The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures [[2]]. ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) [[1]]. The canonical data representation {@DH in glossary and ref here} is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations [[3]].</p>
+<p>Within this KERISuite ecosystem, the dossier should be distinguished from related concepts, including a conventional ACDC credential and a “bespoke ACDC”. A bespoke ACDC may also contain custom links to evidence, but it is a direct response to a specific verifier’s query. A dossier, by contrast, is a pre-curated collection assembled in anticipation of presenting to arbitrary parties at arbitrary points in time. Timing is a consequence of this difference, not the cause of it: a dossier is created in advance because it must be, given that its intended audience is unknown.</p>
 <p>The emergence of the dossier marks a step forward for decentralized identity. The ecosystem is moving beyond simple, atomic claims about a subject (the purpose of a traditional credential) to support curated narratives backed by a body of evidence. This reflects a more realistic understanding of trust: in practice, assurance often depends on evaluating many interrelated facts together. This shift establishes a new role within digital ecosystems: the “<a class="term-reference" href="#term:curator">curator</a>.” The curator may be an individual managing their own data, a lawyer building a case, a journalist protecting sources, or an automated service. Whatever its form, the curator is responsible for assembling and attesting evidence collections, and the dossier provides the formal data structure for that work.</p>
 <p>The following table clarifies these distinctions.</p>
 <div class="table-responsive-md"><table class="table table-striped table-bordered table-hover">
@@ -1296,20 +1233,20 @@ constraints applied to the underlying investigation.</p>
                 </div>
             </div>
             <hr id="external-ref-changes-divider" style="display: none;">
-            <p class="d-none ps-3 pe-3" id="w3c-state">W3C Recommendation, 30 June 2026</p>
+            <p class="d-none ps-3 pe-3" id="w3c-state">W3C Recommendation, 06 August 2026</p>
             <!-- Build Information Section -->
             <div class="ps-3 pe-3">
                 <p class="mb-2 fw-bold">Build Information:</p>
                 <div id="build-info" class="small text-muted">
                     <div class="d-flex align-items-center mb-1">
                         <i class="bi bi-calendar-event me-2"></i>
-                        <time class="timestamp" datetime="2026-06-30T22:28:30.630Z">
-                            Generated: 2026-06-30T22:28:30.630Z
+                        <time class="timestamp" datetime="2026-08-05T22:13:30.461Z">
+                            Generated: 2026-08-05T22:13:30.461Z
                         </time>
                     </div>
                     <div class="d-flex align-items-center mb-1">
                         <i class="bi bi-signpost-split me-2"></i>
-                        <span>Source branch: <strong>schema-base-dossier</strong></span>
+                        <span>Source branch: <strong>try1</strong></span>
                     </div>
                     <div class="d-flex align-items-center mb-1">
                         <i class="bi bi-box me-2"></i>
@@ -1317,7 +1254,7 @@ constraints applied to the underlying investigation.</p>
                     </div>
                     <div class="d-flex align-items-center mb-1">
                         <i class="bi bi-cpu me-2"></i>
-                        <span>Node.js: <strong>v24.15.0</strong></span>
+                        <span>Node.js: <strong>v21.6.1</strong></span>
                     </div>
                 </div>
             </div>
