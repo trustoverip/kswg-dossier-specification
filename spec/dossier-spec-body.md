@@ -1,5 +1,3 @@
-[//]: # (Dossier Data Model {#sec:content})
-
 ## Dossier Data Model (Normative)
 
 ### Core Structure: The Dossier as an ACDC
@@ -540,10 +538,6 @@ This profile demonstrates the **Open-Endorsement Dossier** pattern, designed for
 - **Key Concept: Asynchronous Threshold Satisfaction.** Unlike a standard multisig group that requires tight coordination among a fixed set of peers, this pattern allows any AID that satisfies the criteria defined in the dossier schema to contribute an endorsement.
 - **Mechanism:** The coordinator initiates the dossier and distributes the candidate ACDC. Because the qualified signer set is open-ended, the dossier uses the `MxQ` operator to define the conditions for validity: enough qualified, unique endorsements that their weights sum to unity (with a uniform per-member weight `w`, that means at least `1/w` endorsers), where each endorser proves qualification through the proof schema named in the operator's `qs` field. Participants signify their agreement by issuing a qualified Endorsement ACDC and anchoring it in their individual KELs.
 - **Verification:** A verifier confirms the dossier is valid by observing that enough qualified endorsers' KELs carry a valid endorsement of the dossier SAID for their weights to reach unity. The coordinator may set the dossier's `fi` field and finalize the issuance once that point is reached, simplifying this check for third parties.
-
-[//]: # (\newpage)
-
-[//]: # (\makebibliography)
 
 ## Bibliography
 

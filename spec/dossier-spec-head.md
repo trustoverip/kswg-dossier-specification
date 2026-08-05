@@ -13,32 +13,22 @@
 **Editors:**
 
 **Contributors:**
+- [Henk van Cann](https://github.com/henkvancann), [KERI Foundation](https://keri.foundation/)
 
 **Participate:**
 
 ~ [GitHub repo](https://github.com/trustoverip/kswg-dossier-specification)
 ~ [Commit history](https://github.com/trustoverip/kswg-dossier-specification/commits/main)
 
-**Abstract**
+## Abstract
 
-This document provides a normative definition for a dossier, a data structure for compiling and attesting to collections of verifiable evidence. A dossier is an Authentic Chained Data Container (ACDC) issued by the party assembling the evidence, functioning as a cryptographically verifiable affidavit rather than a traditional credential. It enables the creation of arbitrarily rich, tamper-evident data graphs of evidence. This specification defines the dossier's data model, its operational lifecycle of curation, citation, and verification, and its underlying security and privacy mechanisms, including graduated disclosure. It provides implementation guidance through detailed use cases in telecommunications, law enforcement, and investigative journalism.
-
-[//]: # (\maketitle)
-
-[//]: # (\newpage)
-
-[//]: # (\toc)
-
-[//]: # (\newpage)
-
-[//]: # (::: forewordtitle)
+This document provides a normative definition for a dossier, a data structure for compiling and attesting to collections of verifiable evidence. A dossier is an Authentic Chained Data Container (ACDC) issued by the party assembling the evidence, functioning as a cryptographically verifiable affidavit rather than a traditional credential. It enables the creation of arbitrarily rich, tamper-evident data graphs of evidence. This specification defines the dossier's data model, its operational lifecycle of curation, citation, and verification, and its underlying security and privacy mechanisms, including graduated disclosure and contextual display. It provides implementation guidance through detailed use cases in telecommunications, law enforcement, and investigative journalism.
 
 ## Introduction
 
-[//]: # (:::)
+### What's the challenge in aggregating Verifiable Evidence?
 
-### The Challenge of Verifiable Evidence Aggregation
-In both the physical and digital realms, critical decisions are rarely based on a single piece of information. Instead, decision makers rely on a collection of disparate evidence, curated to form a coherent whole. A loan officer assembles a file of financial statements, credit reports, and employment verifications to assess creditworthiness; a law enforcement official compiles a case file containing forensic reports, witness statements, and crime scene documentation to build a case. The confidence of the decision depends not only on the validity of the individual pieces of evidence but also on the integrity of the collection itself.
+In both the physical and digital realms, critical decisions are rarely based on a single piece of information. Instead, decision makers rely on a collection of disparate evidence; often curated to form a coherent whole. For example, a loan officer assembles a file of financial statements, credit reports, and employment verifications to assess creditworthiness. Another example is a law enforcement official, who compiles a case file containing forensic reports, witness statements, and crime scene documentation to build a case. The confidence of the decision depends not only on the validity of the individual pieces of evidence but also on the integrity of the collection itself. {@DH *integrity* needs explanation. do you mean pieces can be valid but inconsistent as a whole, do you mean incompleteness, etc}
 
 In the digital world, this aggregation process presents serious challenges. The core problem is the absence of a standardized, cryptographically secure method that aggregates diverse pieces of evidence, attests to the integrity of the collection, and manages its lifecycle in a decentralized, interoperable way. Existing systems for evidence management are often siloed within proprietary platforms, dependent on centralized trusted parties, or lack the cryptographic guarantees necessary for high-assurance environments. This fragmentation creates friction, inhibits interoperability across domains (e.g., between different jurisdictions or industries), and introduces single points of failure that can be compromised or become unavailable.
 
@@ -50,27 +40,29 @@ Some evidence is **temporary**. A movie ticket, a JSON Web Token, a browser sess
 
 Other evidence is **changed occasionally**. A PIN, a password, a credit-card number, an X.509 certificate, or a magnetic key card carries a secret that the holder rotates on a scale of days to months as it expires or is suspected of compromise.
 
-A third class is **effectively permanent**. A birth certificate, a passport, articles of incorporation, a fingerprint or iris template, or a chain-of-custody record on a piece of forensic evidence anchors a fact that is meant to be relied on for years or decades.
+A third class is **effectively permanent**. A birth certificate, a passport, articles of incorporation, a fingerprint or iris template, or a chain-of-custody record on a piece of forensic evidence, anchors a fact that is meant to be relied on for years or decades.
 
-A dossier inhabits the permanent end of this spectrum. It snapshots evidence that the issuer expects to remain meaningful and verifiable long after issuance, in front of audiences and against questions the issuer cannot anticipate at signing time. Verifiers may consume a dossier indirectly: an auditor reviewing a loan years after funding, a court evaluating a chain of custody decades after collection, an insurance adjuster reconstructing facts about an incident years before the claim. None of these verifiers communicates with the issuer at the moment of verification.
+A dossier inhabits the permanent end of this spectrum. {@DH poetic, but what do want to say?}  It snapshots evidence that the issuer expects to remain meaningful and verifiable long after issuance, in front of audiences and against questions the issuer cannot anticipate at signing time. Verifiers may consume a dossier indirectly: an auditor reviewing a loan years after funding, a court evaluating a chain of custody decades after collection, an insurance adjuster reconstructing facts about an incident years before the claim. None of these verifiers communicates with the issuer at the moment of verification.
 
-This asynchronous, indirect verification model has three direct consequences for the dossier design:
+This asynchronous, indirect verification model has three direct consequences for the dossier design to facilitate the ad hoc timing of verification:
+{@DH I'm not sure about my addition above, but I think *verfication timing* should be mentioned, cuz it's prominent in your paragraph title}
 
 1. **The artifact must stand alone.** Verification cannot depend on a live channel back to the issuer at verification time.
-2. **Recency and freshness vary per evidentum.** A bank balance referenced in a mortgage dossier may need to be less than a week old; an LEI vetting may be acceptable up to a year old; a passport scan may be acceptable for the document's full validity period. The dossier model accommodates these mixed timelines through per-edge metadata and Temporal Pinning, not through a single global expiry.
+2. **Recency and freshness vary per [[ref:evidentum]].** A bank balance referenced in a mortgage dossier may need to be less than a week old; an LEI vetting may be acceptable up to a year old; a passport scan may be acceptable for the document's full validity period. The dossier model accommodates these mixed timelines through per-edge metadata and [[ref: temporal-pinning, Temporal Pinning]], not through a single global expiry.
 3. **State must be reconstructible at an arbitrary historical point.** Verification at time T requires the key state, revocation state, and evidence state that were effective at T — not necessarily at the moment of verification. This is supported by KERI's historical-query capability over its KELs.
 
 ### Introducing the Dossier: An Issuer-Centric Evidence Container
-This specification introduces the dossier as a solution to these challenges. A [[ref: dossier]] is formally defined as an Authentic Chained Data Container (ACDC) that references an arbitrarily rich collection of signed evidence and is issued by the party that assembles it. It is a container designed to create a verifiable data graph from evidentiary artifacts.
+This specification introduces the dossier as a solution to these challenges. A [[ref: dossier]] is formally defined as an Authentic Chained Data Container (ACDC) that references an arbitrarily rich collection of signed evidence and is issued by the party that assembles it. It is a container designed to create a verifiable data graph from evidentiary artifacts. {@DH Could you reword "a verifiable data graph from evidentiary artifacts."}
 
 A critical distinction separates a dossier from a traditional verifiable credential. A credential typically makes an assertion about a specific subject, or issuee, conferring some right or attribute upon them. A dossier, by contrast, has no issuee. It has only an issuer—the entity that curates the collection. In this sense, a dossier functions more like a notarized affidavit than a passport; the issuer is making a formal, verifiable attestation about the composition and integrity of the evidence collection itself. This issuer-centric model is a fundamental shift from traditional subject-centric identity models.
+{@DH this text block should be in the next paragraph?}
 
-The primary purpose of a dossier is to empower decisions that are likely to be made based on the attested collection of evidence it includes. This contrasts with systems that generate proofs just-in-time in response to a specific verifier query. By pre-assembling evidence into a stable, long-lived, and verifiable container, the dossier enables efficient and scalable proof presentation in a wide variety of contexts.
+The primary purpose of a dossier is to empower decisions. Decision making becomes verifiable if it's based on the attested collection of evidence the dossier includes. This contrasts with systems that generate proofs just-in-time in response to a specific verifier query. By pre-assembling evidence into a stable, long-lived, and verifiable container, the dossier enables efficient and scalable proof presentation in a wide variety of contexts.
 
 ### Relationship to KERI, ACDC, and Verifiable Credentials
-The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures [[2]]. ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) [[1]]. The canonical data representation is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations [[3]].
+The dossier is not a standalone concept; it is deeply rooted in a stack of emerging open standards for decentralized identity. Its technical foundation is the Authentic Chained Data Containers (ACDC) specification, which defines a format for verifiable, chainable data structures [[2]]. ACDCs, in turn, are secured by the Key Event Receipt Infrastructure (KERI), a protocol for decentralized key management that provides secure, rotatable, and auditable Autonomic Identifiers (AIDs) [[1]]. The canonical data representation {@DH in glossary and ref here} is provided by the Composable Event Streaming Representation (CESR), an encoding format that ensures deterministic serialization for cryptographic operations [[3]].
 
-Within this ecosystem, the dossier should be distinguished from related concepts, including a conventional ACDC credential and a "bespoke ACDC". A bespoke ACDC may also contain custom links to evidence, but it is a direct response to a specific verifier's query. A dossier, by contrast, is a pre-curated collection assembled in anticipation of presenting to arbitrary parties at arbitrary points in time. Timing is a consequence of this difference, not the cause of it: a dossier is created in advance because it must be, given that its intended audience is unknown.
+Within this KERISuite ecosystem, the dossier should be distinguished from related concepts, including a conventional ACDC credential and a "bespoke ACDC". A bespoke ACDC may also contain custom links to evidence, but it is a direct response to a specific verifier's query. A dossier, by contrast, is a pre-curated collection assembled in anticipation of presenting to arbitrary parties at arbitrary points in time. Timing is a consequence of this difference, not the cause of it: a dossier is created in advance because it must be, given that its intended audience is unknown.
 
 The emergence of the dossier marks a step forward for decentralized identity. The ecosystem is moving beyond simple, atomic claims about a subject (the purpose of a traditional credential) to support curated narratives backed by a body of evidence. This reflects a more realistic understanding of trust: in practice, assurance often depends on evaluating many interrelated facts together. This shift establishes a new role within digital ecosystems: the "[[ref: curator, Evidence Curator]]." The curator may be an individual managing their own data, a lawyer building a case, a journalist protecting sources, or an automated service. Whatever its form, the curator is responsible for assembling and attesting evidence collections, and the dossier provides the formal data structure for that work.
 
@@ -131,10 +123,6 @@ These materials are made available under and are subject to the [OWF CLA 1.0 - C
 THESE MATERIALS ARE PROVIDED “AS IS.” The Trust Over IP Foundation, established as the Joint Development Foundation Projects, LLC, Trust Over IP Foundation Series ("ToIP"), and its members and contributors (each of ToIP, its members and contributors, a "ToIP Party") expressly disclaim any warranties (express, implied, or otherwise), including implied warranties of merchantability, non-infringement, fitness for a particular purpose, or title, related to the materials. The entire risk as to implementing or otherwise using the materials is assumed by the implementer and user. 
 IN NO EVENT WILL ANY ToIP PARTY BE LIABLE TO ANY OTHER PARTY FOR LOST PROFITS OR ANY FORM OF INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES OF ANY CHARACTER FROM ANY CAUSES OF ACTION OF ANY KIND WITH RESPECT TO THESE MATERIALS, ANY DELIVERABLE OR THE ToIP GOVERNING AGREEMENT, WHETHER BASED ON BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, AND WHETHER OR NOT THE OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[//]: # (\mainmatter)
-
-[//]: # (\doctitle)
-
 ## Scope
 
 This specification defines the data model, lifecycle, and verification semantics for verifiable dossiers — cryptographically attested collections of evidence structured as Authentic Chained Data Containers (ACDCs). It is intended for software developers building on the KERI/ACDC ecosystem, standards authors defining protocols that cite or depend on dossiers, enterprise architects designing evidence workflows, and legal or regulatory professionals evaluating the trust guarantees of dossier-based systems.
@@ -159,4 +147,3 @@ The following are explicitly out of scope: transport or citation protocols for p
 
 [e]. JSON Schema Community, "JSON Schema Specification 2020-12", June 2022.
 [e]: https://json-schema.org/specification.
-
