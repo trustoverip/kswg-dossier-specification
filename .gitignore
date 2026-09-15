@@ -6,6 +6,9 @@ node_modules/
 # Build artifacts
 dist
 build
+# Written to the repo root by `npm run healthCheck`. menu.yml commits with
+# `git add .`, so without this it is one dispatch away from being checked in.
+health-report.html
 # Logs
 *.log
 # Editor / OS temporaries & backups
