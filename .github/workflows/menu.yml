@@ -54,12 +54,18 @@ jobs:
             echo "Error: Unable to extract output_path from specs.json"
             exit 1
           fi
-          echo "OUTPUT_PATH=$OUTPUT_PATH" >> $GITHUB_ENV
+          echo "OUTPUT_PATH=$OUTPUT_PATH" >> "$GITHUB_ENV"
 
+      # npm ci rather than npm install, for the reason given in
+      # render-and-deploy.yml: it installs package-lock.json exactly instead of
+      # re-resolving it. The custom-update action below deliberately runs
+      # npm update afterwards, which is the one place the lockfile is meant to
+      # move; starting that from the locked tree makes the resulting diff
+      # reviewable.
       - name: Install dependencies 🔧
         run: |
           echo "Installing dependencies..."
-          npm install
+          npm ci
           echo "Spec-Up-T version:"
           npm list spec-up-t || echo "spec-up-t not found"
 
