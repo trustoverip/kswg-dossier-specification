@@ -56,8 +56,14 @@ jobs:
         with:
           node-version: '24'
 
+      # npm ci, not npm install. package.json pins spec-up-t to an exact version
+      # and package-lock.json pins the whole transitive tree, but npm install is
+      # free to resolve something else and rewrite the lockfile, so neither pin
+      # binds what CI actually builds. npm ci installs the lockfile exactly and
+      # fails when it disagrees with package.json — which makes a published
+      # render reproducible from the commit that produced it.
       - name: Install dependencies 🔧
-        run: npm install
+        run: npm ci
 
       # Collect external references — this also renders the specification and
       # writes output to the path defined in specs.json (output_path, typically ./docs/).
