@@ -1,0 +1,150 @@
+name: PR Render Check
+
+# Builds the specification for every pull request and publishes the result as a
+# downloadable artifact. It never deploys — gh-pages is written only by
+# render-and-deploy.yml, which runs on pushes to main/master.
+#
+# This exists because nothing else here runs on a pull request. Before it, a PR
+# could change package.json, package-lock.json and specs.json and reach review
+# with no build verification at all: the only checks were DCO and EasyCLA. The
+# render either works or it doesn't, and CI is a cheaper place to find that out
+# than the gh-pages deploy after merge.
+#
+# On a pull request from a fork, GITHUB_TOKEN is read-only. That is enough —
+# the job only reads public glossary repositories and writes nothing back.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+# One render per pull request. Superseded runs are cancelled: unlike a deploy,
+# a stale PR render has no value once a newer commit exists.
+concurrency:
+  group: pr-render-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # Read the render target from specs.json rather than hardcoding ./docs,
+      # the same way menu.yml does, so changing output_path does not silently
+      # leave this workflow checking and uploading the wrong directory.
+      - name: Extract output_path from specs.json
+        run: |
+          set -euo pipefail
+          OUTPUT_PATH=$(jq -r '.specs[0].output_path // empty' specs.json)
+          if [ -z "$OUTPUT_PATH" ]; then
+            echo "::error::Could not read .specs[0].output_path from specs.json"
+            exit 1
+          fi
+          echo "OUTPUT_PATH=${OUTPUT_PATH%/}" >> "$GITHUB_ENV"
+
+      # npm ci fails when package.json and package-lock.json disagree, so the
+      # lockfile is verified as a side effect of building rather than trusted.
+      - name: Install dependencies 🔧
+        run: npm ci
+
+      # Same command render-and-deploy.yml uses, so this check exercises the
+      # production path rather than an approximation of it. GITHUB_API_TOKEN
+      # keeps external-reference lookups off the 60-per-hour unauthenticated
+      # limit, which this spec's two external glossaries can exhaust.
+      - name: Collect external references and render
+        env:
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run collectExternalReferences
+
+      # The render pipeline exits 0 even when it has logged errors and even when
+      # the page it produced is a stub, so assert on the artifact instead of on
+      # the exit code. The thresholds are floors that catch a collapsed render,
+      # not a fixture: ordinary edits move these numbers and should not fail.
+      - name: Check the render produced a usable spec
+        run: |
+          set -euo pipefail
+
+          INDEX="${OUTPUT_PATH}/index.html"
+
+          if [ ! -f "$INDEX" ]; then
+            echo "::error::Render produced no $INDEX."
+            exit 1
+          fi
+
+          # `|| true` inside the braces because grep exits 1 when it matches
+          # nothing, and under `set -o pipefail` that would abort this step
+          # before it could say which assertion failed — on exactly the
+          # collapsed render the assertions exist to describe.
+          BYTES=$(wc -c < "$INDEX")
+          TERMS=$( { grep -o 'id="term:' "$INDEX" || true; } | wc -l )
+          HEADINGS=$( { grep -o '<h2' "$INDEX" || true; } | wc -l )
+          echo "$INDEX: $BYTES bytes, $TERMS term anchors, $HEADINGS h2 headings"
+
+          FAILED=0
+          if [ "$BYTES" -lt 100000 ]; then
+            echo "::error::$INDEX is $BYTES bytes. A complete render of this spec is well over 1 MB, so this is a stub."
+            FAILED=1
+          fi
+          if [ "$TERMS" -lt 10 ]; then
+            echo "::error::Only $TERMS term anchors in the render. The terminology section did not survive."
+            FAILED=1
+          fi
+          if [ "$HEADINGS" -lt 5 ]; then
+            echo "::error::Only $HEADINGS h2 headings in the render. The spec body did not survive."
+            FAILED=1
+          fi
+
+          # spec-up-t records every Logger call in .cache/console-messages.json,
+          # including the errors it prints without exiting non-zero. Warnings are
+          # reported but do not fail the run: unresolvable external terms are
+          # common while a glossary is in flux and are not this PR's fault.
+          MSGS=.cache/console-messages.json
+          if [ -f "$MSGS" ]; then
+            ERRORS=$(jq -r '.metadata.messagesByType.error // 0' "$MSGS")
+            WARNINGS=$(jq -r '.metadata.messagesByType.warn // 0' "$MSGS")
+            echo "render logged $ERRORS error(s), $WARNINGS warning(s)"
+            if [ "$WARNINGS" != "0" ]; then
+              jq -r '.messages[] | select(.type == "warn") | "  warning: \(.message)"' "$MSGS"
+            fi
+            if [ "$ERRORS" != "0" ]; then
+              jq -r '.messages[] | select(.type == "error") | "::error::\(.message)"' "$MSGS"
+              FAILED=1
+            fi
+          else
+            echo "::warning::No $MSGS — cannot check what the render logged."
+          fi
+
+          {
+            echo "## Render check"
+            echo ""
+            echo "- Output: \`$INDEX\`, $BYTES bytes"
+            echo "- Term anchors: $TERMS"
+            echo "- Headings (h2): $HEADINGS"
+            echo "- Logged errors: ${ERRORS:-unknown}, warnings: ${WARNINGS:-unknown}"
+            echo ""
+            echo "Download the \`rendered-spec\` artifact to read the built page."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit "$FAILED"
+
+      # Uploaded even when the assertions above fail, so a broken render can be
+      # opened and looked at rather than reasoned about from the log.
+      - name: Upload the rendered spec
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: rendered-spec
+          path: ${{ env.OUTPUT_PATH }}/
+          retention-days: 14
+          if-no-files-found: warn
