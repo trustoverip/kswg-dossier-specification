@@ -1,6 +1,6 @@
 # Verifiable Dossiers
 
-**Specification Status**: v0.6 Draft
+**Specification Status**: v0.7 Draft
 
 **Latest Draft:**
 
