@@ -54,7 +54,7 @@ jobs:
             echo "Error: Unable to extract output_path from specs.json"
             exit 1
           fi
-          echo "OUTPUT_PATH=$OUTPUT_PATH" >> $GITHUB_ENV
+          echo "OUTPUT_PATH=$OUTPUT_PATH" >> "$GITHUB_ENV"
 
       - name: Install dependencies 🔧
         run: |
