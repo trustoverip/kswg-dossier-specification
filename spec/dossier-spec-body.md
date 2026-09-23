@@ -428,7 +428,7 @@ Stating the policy explicitly, rather than letting it emerge from whatever schem
 
 The verification process for a dossier requires a citation and a [[ref: reference-time, referenceTime]] as inputs, together with the acceptance policy above. To support joint issuance, the algorithm follows these steps:
 
-1. Fetch dossier: resolve the citation to retrieve the dossier ACDC.
+1. Fetch dossier: resolve the citation to retrieve the dossier ACDC and the stream that accompanies it, as described under *Serving and Archiving a Dossier*. Record when, and from where, the stream was retrieved.
 
 2. Validate dossier integrity: calculate the SAID of the retrieved data and ensure it matches the expected SAID from the citation.
 
@@ -444,7 +444,7 @@ The verification process for a dossier requires a citation and a [[ref: referenc
    c. For standard dossiers with a single issuer, retrieve the issuer's KEL and locate the event anchoring a seal that contains the dossier's SAID — either directly, or by way of a transaction event log whose events the KEL anchors. Verify that anchoring event's signatures against the key state the KEL establishes as authoritative *at that event's position in the log*, not against the key state current at the referenceTime; an anchor remains verifiable across any number of later rotations, and requiring the referenceTime key state would defeat that property. Then confirm that the anchoring event precedes the referenceTime.
    d. Only if the dossier was authenticated by an attached signature under *Ephemeral Dossiers With Attached Signatures*, verify that signature against the issuer's current key state. A verifier MUST reject such a dossier when the referenceTime is not the present, and SHOULD reject it when the dossier was retrieved from a cache or a published location rather than received directly within the transaction it authenticates.
 
-7. Recursive graph traversal: for each named edge in the edges block, fetch the referenced artifact and perform this validation algorithm recursively. Where an `authority` edge is present, follow it transitively through the referenced credentials' own edges, as described under *Binding the Issuer's Authority*, and confirm that the chain terminates at a root named in the acceptance policy.
+7. Recursive graph traversal: for each named edge in the edges block, locate the referenced artifact in the retrieved stream or presented package, fetching it separately only if it is absent, and perform this validation algorithm recursively. Where an `authority` edge is present, follow it transitively through the referenced credentials' own edges, as described under *Binding the Issuer's Authority*, and confirm that the chain terminates at a root named in the acceptance policy.
 
 8. Check revocation status: for the dossier and every node in the evidence graph, consult the relevant KELs or status registries for revocation events effective at the referenceTime.
 
