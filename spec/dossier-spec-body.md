@@ -89,6 +89,16 @@ The primary payload of a dossier is not a set of direct claims, but rather a gra
 A dossier MAY contain an unbounded number of edges, reflecting its core purpose of aggregating an arbitrary quantity and variety of evidence. The field names (keys) for these edges MAY be any valid JSON string, allowing issuers to provide semantically meaningful labels for the linked evidence (e.g.,
 "vettingCredential", "forensicReport_01", "tnAllocationProof"), as demonstrated in the Verifiable Voice Protocol (VVP) specification.
 
+#### The Dossier as Graph Root
+
+An edge refers to its target by SAID, and an ACDC's SAID cannot be computed until its content is final. An ACDC can therefore point only at ACDCs that already existed when it was made, and edges can never form a cycle. A dossier and its evidence form a directed acyclic graph with the dossier at the top.
+
+That structure does not by itself tell a verifier which ACDC is the dossier. A verifier that resolves a citation knows, because the citation names the dossier's SAID. A verifier that is handed a package (see *Presentation as a Self-Contained Package*) may not: nothing outside the package names the dossier, and the package may hold dozens of ACDCs. This specification fills that gap with a rule about what may be presented together.
+
+Within any set of ACDCs presented together for evaluation, the dossier under evaluation MUST be the only ACDC that no other ACDC in the set points to. A verifier finds the dossier by finding that ACDC. If more than one ACDC in the set qualifies, the set is malformed, and the verifier can reject it before doing any cryptographic work.
+
+The rule governs a single presentation, not dossiers in general. Other ACDCs often point at a dossier: a later version points at an earlier one through its `prev` edge or an annotation edge, and an unrelated dossier may cite it as evidence. Those ACDCs are legitimate. They cannot be presented alongside a dossier they point at, unless one of them is itself the subject. For example, if versions 1 and 2 of a dossier are presented together, version 2's `prev` edge points at version 1, so version 2 is the only ACDC nothing points to, and it is the dossier under evaluation.
+
 ### Base JSON-Schema Definition
 
 To ensure a baseline of interoperability while preserving the flexibility required for diverse use cases, all dossiers MUST conform to a base JSON Schema. This specification defines the normative requirements for such a schema.
@@ -106,7 +116,7 @@ A compliant schema for a dossier:
         "allOf": [
             { 
                 "description": "reference to dossier base schema",
-                "$ref": "EKuLzS_oN_mIao5og1NOujtF2QMXloiMCZP7xuAR5tY7"
+                "$ref": "ENroDvI_lXRUa3p1UCxU6Pxp0DWDS1yZNexCq_1TQlcj"
             },
             {
                 "type": "object",
@@ -125,6 +135,16 @@ A compliant schema for a dossier:
 * SHOULD set the `additionalProperties` keyword to true at the root level and for the edges object. This design choice lets issuers add arbitrary, application-specific edges without invalidating the dossier against the base schema.
 
 This mandated flexibility has a direct consequence for implementers of verifier systems. A generic dossier verifier can be built to perform universal cryptographic validation—confirming anchors, SAIDs, and KEL consistency—for any dossier conforming to the base schema. However, such a generic verifier cannot be expected to understand the full semantics of every possible dossier. For instance, it can verify that an edge labeled "lunarPropertyDeed" is cryptographically linked, but it cannot know what that means or how to process it. Therefore, verification must be understood as a layered process. The first layer, cryptographic validation, is universal and defined by this specification. The second layer, semantic validation (e.g., "Does this dossier contain a valid TNAlloc credential for the phone number in question?"), is necessarily application-specific and requires context-dependent business logic. This separation allows the dossier format to be a universal building block for evidence aggregation across countless current and future use cases.
+
+#### Recognizing a Dossier
+
+The `allOf` and `$ref` construction above is how a schema *declares* that it is a dossier. Recognizing that declaration requires a validator that can resolve a `$ref` to a schema identified by SAID, which is a capability rather than a given.
+
+Where a verifier can resolve such references, it SHOULD recognize a dossier by that means, because doing so requires no prior knowledge of the specific schema and therefore extends to dossier types the verifier has never encountered.
+
+Where it cannot, a verifier MAY instead recognize a dossier by matching its schema SAID against the governed set in its acceptance policy. This is weaker: it recognizes only the dossier types the verifier was configured for, and it silently fails to recognize a conforming dossier of an unfamiliar type. That failure mode is acceptable because the correct outcome in that case is INDETERMINATE, which is precisely what an unrecognized schema SAID already produces. A verifier that recognizes dossiers this way MUST NOT treat the allowlist as a substitute for schema validation against the schema it does resolve, and SHOULD state which recognition method it implements, since the two differ in what they will accept from a stranger.
+
+Implementers should be aware that `$ref` resolution is not currently available in the most widely deployed KERI implementation. In keripy at the time of writing, the schema validator used on both the issuance and verification paths is constructed without a resolver — `Schemer(raw=…)` in `src/keri/vdr/credentialing.py` and `src/keri/vdr/verifying.py` takes the default `JSONSchema()`, whose `resolver` is `None`, and `JSONSchema.verify` passes a reference registry to the validator only when a resolver is present. Schema integrity is additionally checked with `jsonschema.Draft7Validator.check_schema`. An unresolved `$ref` therefore fails, and a schema written against draft 2020-12 with an `allOf`/`$ref` to the base dossier SAID cannot currently be issued or verified by that stack. This is an implementation gap rather than a defect in the requirement, and the allowlist recognition described above is the interim mechanism available to deployments that meet it.
 
 ## Incorporating Evidence
 
@@ -148,6 +168,26 @@ two keys:
   a verifier to correctly parse and interpret the evidence.
 
 This pattern is exemplified by the sample dossier in the VVP specification.
+
+#### Edge Operators on Evidence Edges
+
+An `{n, s}` pair with no operator field is sufficient for most dossier edges, and it is worth saying why, because an implementer who reaches for an explicit `o` on every edge is usually solving a problem that has already been solved by construction.
+
+ACDC's default operators divide on whether the target has an issuee. A target without one — every [[ref: foreign-artifact-wrapper, Foreign Artifact wrapper]], every [[ref: observation-attestation, Observation Attestation]], and any other attestation about a thing rather than about a party — defaults to NI2I, which asks only whether the target was issued. A target that does have an issuee defaults to I2I, which additionally requires the referring ACDC's issuer to be that issuee.
+
+For a dossier, I2I usually holds without anyone arranging it. A dossier's issuer is the party whose authority the dossier is exercised under, and the credential conferring that authority names that same party as its issuee, so the edge from dossier to role credential satisfies I2I as a matter of who the parties are. The same is generally true hop by hop up an authority chain, where each credential's issuer is the issuee of the one above it.
+
+Issuers therefore SHOULD omit `o` on evidence edges and let the defaults apply, and SHOULD state it explicitly only where the intended semantics differ from the default. A verifier MUST apply the ACDC default when no operator is present rather than treating an absent operator as an absent constraint.
+
+### Binding the Issuer's Authority
+
+A dossier attests to the composition of a collection, and a verifier that has checked the anchor knows who made that attestation. It does not yet know whether that party was entitled to make it. For many dossiers the question does not arise: an artist collecting evidence of their own work needs no authorization. For any dossier issued on an organization's behalf, or under a license, role, or delegation, it is the first question a verifier asks.
+
+A dossier SHOULD answer it structurally, with an edge to the credential that confers the authority under which the dossier was issued. The edge SHOULD be named `authority`. Reserving one conventional name lets a generic verifier locate the authority chain without knowing the dossier's domain, while every other edge name remains free-form and is resolved by SAID as before.
+
+How deep the chain is spelled out in the dossier is a schema-level choice, and deployments reasonably differ. A dossier MAY carry sibling edges to several credentials that are jointly necessary — one vetting the organization, another conferring the signing role — or it MAY carry a single `authority` edge and leave the verifier to reach the rest by traversing edges that the referenced credential's own schema already makes normative. Both are conforming. The second is often preferable, since duplicating a hop the verifier must walk anyway creates two statements of one fact that can disagree.
+
+The consequence for verifiers is that the absence of an edge proves nothing about the absence of a link. A verifier MUST follow an authority chain transitively to its root, through the referenced credentials' own edges, and MUST NOT require that every hop appear as a direct edge of the dossier. Where the chain does not terminate at a root named in the acceptance policy, the outcome is INVALID.
 
 ### Referencing Non-ACDC Evidence
 
@@ -211,6 +251,17 @@ requirements:
    CESR-encoded hash, and a `content_type` field holding an IANA MIME type
    string.
 3. The `content_digest` SHOULD be a bSAID or xSAID as defined in [[8]].
+4. Its `a` section MUST contain a `filename` field when `content_digest` holds
+   an xSAID, and SHOULD contain one otherwise.
+
+The `filename` requirement follows from how the externalized SAID algorithm
+works. An xSAID is carried in the artifact's filename rather than in its bytes,
+so the filename is an input to the identifier rather than incidental packaging.
+A wrapper that omits it leaves a verifier unable to recompute what the wrapper
+committed to. For bSAIDs and plain hashes the filename is not load-bearing, but
+recording it is still worthwhile: it is what lets a verifier report *which*
+artifact failed when a digest does not match, and artifacts routinely travel
+alongside a dossier as a set of files rather than one at a time.
 
 A reference schema and example for a Foreign Artifact ACDC are published
 separately at [[9]]. Implementers MAY define specialized schemas that
@@ -282,27 +333,74 @@ Because dossiers are designed to be stable, long-lived, and potentially large da
 
 A [[ref: citation]] is a reference that allows a verifier to locate and retrieve the full dossier. The normative requirement for a dossier citation is that it MUST be a resolvable identifier that enables a verifier to fetch the complete and unmodified dossier ACDC. The canonical implementation of this is the Out-of-Band Invitation (OOBI) URL used in the evd (evidence) claim of a VVP passport. An OOBI is a specialized URL that points to a resource serving the ACDC and its associated KERI proofs.
 
+### Presentation as a Self-Contained Package
+
+Citation assumes the verifier goes and gets the dossier. Some dossiers are instead delivered, complete, to a party who is expecting them: a filing submitted to a regulator on a deadline, a disclosure produced to opposing counsel, an evidence package handed to an auditor. In these cases there is no advantage in publishing an OOBI for a recipient who is known in advance, and often a positive requirement not to publish anything at all.
+
+A dossier MAY therefore be presented as a self-contained package: a single transferable unit carrying the dossier, every ACDC reachable from it, the key event logs and transaction event logs needed to establish the key state and revocation status of every issuer in that graph, and any opaque artifacts whose wrappers the dossier references. The ACDCs and log events in a package MUST be serialized as a CESR stream [[3]], since that is the form in which KERI and ACDC already express them. Opaque artifacts are not CESR and travel alongside the stream in whatever container the parties agree on, such as an archive file holding the stream and the artifacts. IPEX provides a natural exchange protocol for a package, but this specification does not mandate it.
+
+The defining property is self-containment. A conforming package MUST be verifiable from its own contents alone, with no network access at the time of verification. A verifier SHOULD ingest a package into a fresh, empty datastore and evaluate it there, so that nothing it happens to already know is silently supplying a fact the package failed to carry. A package that verifies only against a populated datastore has not demonstrated what it appears to demonstrate, and the failure will surface later, when an auditor tries to replay it somewhere else.
+
+Two further consequences follow:
+
+- No citation names the dossier, so a verifier identifies it by the rule under *The Dossier as Graph Root*: it is the only ACDC in the package that no other ACDC points to.
+- The act of delivery SHOULD itself be authenticated, separately from the dossier's own anchor. A dossier's anchor establishes who assembled the collection and when; it says nothing about who transmitted it, to whom, or under what obligation. Where submission has consequences of its own — a filing deadline, a certification made to a regulator — the submitter SHOULD sign or anchor the transmission, so that the act of submitting is as non-repudiable as the content submitted.
+
+Self-containment is also what makes a package durable evidence rather than a delivery mechanism. The same bytes can be replayed years later, against the same algorithm and the same referenceTime, by someone who was not party to the original exchange and cannot reach anyone who was.
+
 ### Verification: Algorithm for Validation
 
-The verification process for a dossier requires a citation and a [[ref: reference-time, referenceTime]] as inputs. To support joint issuance, the algorithm follows these steps:
+#### Verification Outcomes
+
+Verification of a dossier yields one of three outcomes. Two of them are the familiar ones; the third exists because of the layered verification described under *Base JSON-Schema Definition*, where cryptographic validation is universal but semantic validation is not.
+
+- **VALID.** Every check in the algorithm below passed, and every credential reachable from the dossier carries a schema the verifier governs. The verifier can act on the dossier.
+- **INVALID.** A check failed definitively: a SAID that does not recompute, an anchor that is absent or made under keys that were not authoritative, a chain that does not reach a trusted root, a credential revoked as of the referenceTime, an artifact whose bytes do not match its committed digest, a package that breaks the rule under *The Dossier as Graph Root*. The verifier MUST NOT act on the dossier.
+- **INDETERMINATE.** The structure and the cryptography are sound, but the verifier encountered something it is not competent to judge — most commonly a credential in the graph whose schema is outside the set the verifier governs. Nothing is known to be wrong. The verifier cannot say the dossier is good, and MUST NOT treat it as though it could.
+
+A dossier is designed to aggregate evidence from domains its verifier may not know, so meeting an unrecognized schema is an ordinary event rather than an error. A verifier with only two outcomes must either reject those dossiers, which makes the extensibility the model depends on unusable, or accept them, which silently confers trust on credentials nobody evaluated. Naming the third case lets a verifier report exactly what it could not decide, and lets a governing framework decide whether that is tolerable in its context.
+
+A verifier MUST return INVALID rather than INDETERMINATE whenever a check fails definitively, even if an unrecognized schema is also present: an established failure is not made uncertain by the presence of an unknown. Conversely, a verifier MUST NOT return VALID for a dossier containing any node it could not evaluate.
+
+#### Verifier Acceptance Policy
+
+INDETERMINATE is only decidable if "what the verifier governs" is a stated set rather than an implicit one. A conforming verifier therefore operates under an explicit acceptance policy, configured in advance and independent of any particular dossier. The policy MUST state at least:
+
+- **Governed schema SAIDs.** The set of schemas the verifier is competent to evaluate. A credential reachable from the dossier whose `s` falls outside this set yields INDETERMINATE.
+- **Trusted root AIDs.** The identifiers at which an authority chain must terminate. A chain that terminates anywhere else yields INVALID; it is not an unknown, it is a chain to the wrong root.
+- **Reference time rule.** How the [[ref: reference-time, referenceTime]] is chosen for each verification: for example, the time of the transaction the dossier supports, a filing deadline, or the moment verification runs. The referenceTime itself differs from one verification to the next. The policy states the rule for choosing it, not a particular time.
+
+Stating the policy explicitly, rather than letting it emerge from whatever schemas an implementation happens to have cached, is what makes two verifiers' verdicts comparable, and what lets a verifier explain a refusal in terms a submitter can act on.
+
+#### The Algorithm
+
+The verification process for a dossier requires a citation and a [[ref: reference-time, referenceTime]] as inputs, together with the acceptance policy above. To support joint issuance, the algorithm follows these steps:
 
 1. Fetch dossier: resolve the citation to retrieve the dossier ACDC.
 
 2. Validate dossier integrity: calculate the SAID of the retrieved data and ensure it matches the expected SAID from the citation.
 
-3. Determine issuance model: inspect the attributes block for an `fi` [[ref: finalization-identifier, finalization identifier]] and the edges block for a joint-issuance [[ref: threshold-operator, threshold operator]] (`MxN`, `RMxN`, `MxQ`, or `RMxQ`) in an edge group's `o` field.
+3. Check the graph root: where the dossier was presented as part of a package rather than fetched by citation, confirm that it is the only ACDC presented that no other presented ACDC points to, as required under *The Dossier as Graph Root*. A package in which more than one ACDC meets that test is INVALID.
 
-4. Validate anchors:
+4. Check governance: confirm that the dossier's own schema appears in the governed set named by the acceptance policy, and apply the same test to every credential reached during traversal in step 7. A schema outside the governed set yields INDETERMINATE.
+
+5. Determine issuance model: inspect the attributes block for an `fi` [[ref: finalization-identifier, finalization identifier]] and the edges block for a joint-issuance [[ref: threshold-operator, threshold operator]] (`MxN`, `RMxN`, `MxQ`, or `RMxQ`) in an edge group's `o` field.
+
+6. Validate anchors:
    a. If `fi` is present and non-null, locate the finalization event in the KEL of the AID it names. Verify that the event carries the threshold-satisfying endorsements for the relevant operator.
    b. If `fi` is absent or null but a threshold operator is present, evaluate each slot in the operator's edge group. A slot is **Endorsed** only when it references an Endorsement ACDC with `disp` `"endorse"` and `act` appropriate to the operation, issued by the expected endorser and anchored in that endorser's KEL. Confirm that the weights (`w`) of the Endorsed slots sum to at least unity (1) — for the qualified operators, using the uniform member weight the operator declares. For the qualified operators, additionally verify that each counted endorsement carries a qualification proof (`e.qp`) that validates against the schema named in the operator's `qs` field.
    c. For standard dossiers with a single issuer, retrieve the issuer's KEL and locate the event anchoring a seal that contains the dossier's SAID — either directly, or by way of a transaction event log whose events the KEL anchors. Verify that anchoring event's signatures against the key state the KEL establishes as authoritative *at that event's position in the log*, not against the key state current at the referenceTime; an anchor remains verifiable across any number of later rotations, and requiring the referenceTime key state would defeat that property. Then confirm that the anchoring event precedes the referenceTime.
    d. Only if the dossier was authenticated by an attached signature under *Ephemeral Dossiers With Attached Signatures*, verify that signature against the issuer's current key state. A verifier MUST reject such a dossier when the referenceTime is not the present, and SHOULD reject it when the dossier was retrieved from a cache or a published location rather than received directly within the transaction it authenticates.
 
-5. Recursive graph traversal: for each named edge in the edges block, fetch the referenced artifact and perform this validation algorithm recursively.
+7. Recursive graph traversal: for each named edge in the edges block, fetch the referenced artifact and perform this validation algorithm recursively. Where an `authority` edge is present, follow it transitively through the referenced credentials' own edges, as described under *Binding the Issuer's Authority*, and confirm that the chain terminates at a root named in the acceptance policy.
 
-6. Check revocation status: for the dossier and every node in the evidence graph, consult the relevant KELs or status registries for revocation events effective at the referenceTime.
+8. Check revocation status: for the dossier and every node in the evidence graph, consult the relevant KELs or status registries for revocation events effective at the referenceTime.
 
-7. Apply semantic rules: apply application-specific policy rules once cryptographic validation is complete.
+9. Check artifact digests: for every node in the graph that is a [[ref: foreign-artifact-wrapper, Foreign Artifact wrapper]] whose artifact accompanies the dossier or is otherwise available to the verifier, recompute the artifact's digest using the algorithm identified by the CESR primitive code of the wrapper's `content_digest`, and compare. A mismatch MUST fail verification, and the verifier SHOULD report which artifact failed. Where the artifact is not available, the wrapper itself may still verify, but the artifact does not: a verifier MUST NOT treat a valid wrapper as evidence that the bytes it describes are intact, and SHOULD report the artifact as unchecked rather than as passing.
+
+10. Apply semantic rules: apply application-specific policy rules once cryptographic validation is complete.
+
+The steps are ordered, and a verifier SHOULD short-circuit on the first that does not pass, since later steps are rarely meaningful once an earlier one has failed. A verifier SHOULD also retain the per-step result, not merely the final outcome. Where a dossier is used for compliance, discovery, or audit, the question asked later is usually not whether verification succeeded but which checks were performed and against what state, and a step-by-step record answers that without requiring the original verifier to be available.
 
 ### The Attributes Section: Proximate Metadata
 
@@ -400,7 +498,26 @@ additional fields appropriate to their domain.
   Both fields MAY be present simultaneously: `gov` describes who is
   overseeing the dossier, while `gov_rules` describes what procedural
   constraints applied to the underlying investigation.
-  
+
+- **`attest`**: A declaration the issuer makes in their own voice about the collection, as part of the act of issuing it. An object with a `statement` field holding human-readable text, and a `confirmed` boolean recording whether the issuer affirms that statement. Example: `{"statement": "I certify that the materials enumerated here are complete and accurate to the best of my knowledge.", "confirmed": true}`. The boolean is not redundant with the issuer's anchor. An anchor establishes that the issuer issued this dossier; `confirmed` establishes whether the issuer adopted the declaration it contains, so a dossier can carry a required declaration and record that it was withheld. Where the declaration has legal effect, the exact wording usually comes from the governing framework, and `gov` or `gov_rules` SHOULD identify that framework.
+
+- **`manifest`**: An enumeration of the components the dossier is expected to contain, keyed by an identifier drawn from the governing framework. Each entry is an object carrying at minimum a `status`, and optionally a human-readable `name`, a `reason`, a `due` date, and an `edge` field naming the edge that carries that component's evidence. The following statuses are defined; implementers MAY define others, and SHOULD reference the vocabulary their framework uses:
+
+    * `provided` — the component is present, and `edge` names the edge that carries it.
+    * `pending` — the component is required and will follow, with `due` giving the date it is expected by.
+    * `not_applicable` — the component is not required of this issuer in this instance, with `reason` explaining why.
+    * `withheld` — the component is required, is not supplied, and is not promised, with `reason` recording the grounds.
+
+#### Attesting to Completeness
+
+The [[ref: manifest]] field exists because some dossiers must attest to their own negative space. In most of the patterns this specification describes, a dossier asserts what its issuer gathered, and a verifier's question is whether each item is authentic. In regulated filing, accreditation, audit and discovery, the harder question is the opposite one: is anything missing, and was the omission disclosed? The consequential failure is rarely a forged document. It is an item that was required, was not supplied, and was never mentioned.
+
+A dossier without a manifest cannot distinguish the three cases a supervising authority most needs to tell apart: a component that is absent because it does not apply, one that is absent because it is still coming, and one that is absent because the issuer chose not to supply it. Enumerating every expected component, including the ones with no corresponding edge, makes each of those an explicit, attributable claim rather than an inference from silence — and because the enumeration is inside the dossier, the issuer's anchor commits to it exactly as it commits to the evidence graph. An issuer who omits a required item and marks it `not_applicable` has made a false statement that survives in a duplicity-evident log, which is a materially different position from having simply left it out.
+
+A manifest entry that names an edge does not violate the rule that the `a` section MUST NOT carry evidenta. The entry carries no evidence; it carries the issuer's account of what the collection was supposed to contain, and a pointer to where the corresponding evidence sits in `e`. The evidence itself remains reachable only through edges, and a verifier that ignores the manifest entirely still recovers the full evidence graph. What it loses is the issuer's claim about completeness, which is metadata about the collection rather than a member of it.
+
+Verifiers SHOULD treat manifest processing as semantic validation rather than cryptographic validation. Whether a `withheld` component is acceptable, or a `pending` one is overdue, is a policy question belonging to the governing framework. What this specification requires is that where a manifest entry has `status` `provided`, its `edge` field MUST name an edge that is present in the dossier's `e` section, so that the two accounts of the collection cannot silently disagree.
+
 ## Joint Issuance
 A dossier may be assembled and issued by a single party. For example, an artist who wishes to collect cryptographic evidence of their creations may do so as a solo activity. However, many dossiers snapshot evidence contributions from multiple parties, and so represent a group work product that needs an aggregate approval mechanism. In such cases, authorizing the issuance of the ACDC that references all the individual pieces of evidence is managed with joint issuance.
 
@@ -518,6 +635,10 @@ The dossier model operates on a decentralized root of trust. A verifier does not
 
 The foundation of this trust is the KERI witness infrastructure. Witnesses are independent services that act as notaries for an AID's KEL. By requiring an issuer to report its key events to a set of witnesses, the system gains high availability and duplicity detection. Verifiers SHOULD consult multiple witnesses to ensure they have a consistent and complete view of an issuer's KEL, thereby protecting against duplicity and compromise.
 
+One configuration deserves separate mention, because it is common in regulated settings and because it simplifies the trust decision considerably. Where a dossier is submitted to the same authority that roots the issuer's credential chain — a regulator receiving a filing from an entity it licensed, an accreditor receiving a renewal from a body it accredited — the verifier and the root of trust are the same party. The verifier is then not weighing whether to extend trust to someone else's root. It is confirming that the chain terminates at itself, and rejecting anything that does not.
+
+This closed loop removes most of the judgment from trust configuration, but it does not remove the configuration. The authority must still state which root AIDs it recognizes as its own and which schemas it governs, because a chain that reaches the right root through a credential type the authority never defined is not something the authority can evaluate. It also does not remove the need for witnesses: an authority verifying a submission against its own root still depends on witnessed KELs to detect duplicity in the submitter's key history, and SHOULD apply the same multi-witness discipline it would apply to a stranger.
+
 ### Long-Term Auditability and Historical Analysis
 
 The KERI-based dossier ecosystem supports long-lived auditing. Because KELs provide a complete, verifiable, and sequenced history of an identifier's key state, a verifier can perform validation for any arbitrary point in the past. 
@@ -613,6 +734,15 @@ This profile demonstrates the **Open-Endorsement Dossier** pattern, designed for
 - **Key Concept: Asynchronous Threshold Satisfaction.** Unlike a standard multisig group that requires tight coordination among a fixed set of peers, this pattern allows any AID that satisfies the criteria defined in the dossier schema to contribute an endorsement.
 - **Mechanism:** The coordinator initiates the dossier and distributes the candidate ACDC. Because the qualified endorser set is open-ended, the dossier uses the `MxQ` operator to define the conditions for validity: enough qualified, unique endorsements that their weights sum to unity (with a uniform per-member weight `w`, that means at least `1/w` endorsers), where each endorser proves qualification through the proof schema named in the operator's `qs` field. Participants signify their agreement by issuing a qualified Endorsement ACDC and anchoring it in their individual KELs.
 - **Verification:** A verifier confirms the dossier is valid by observing that enough qualified endorsers' KELs carry a valid endorsement of the dossier SAID for their weights to reach unity. The coordinator may set the dossier's `fi` field and finalize the issuance once that point is reached, simplifying this check for third parties.
+
+### Regulatory Filing: The Attested Submission Dossier
+
+This profile illustrates the **Attested Submission Dossier** pattern, which covers a recurring obligation to file a defined set of materials with a supervising authority: an annual accreditation renewal, a licensing return, an audit package, a grant report, a customs declaration. These filings are alike in shape. A checklist fixed by the authority says what must be supplied; a named individual assembles it and certifies it on the organization's behalf; and the authority that receives it is the same body that authorized the filer to act.
+
+- **Goal:** Discharge a filing obligation with one self-contained object that establishes what was supplied, what was not, who certified it, and under what authority — and that remains verifiable years later, during an audit of the filing itself.
+- **Key Concept: Attested Completeness.** The distinguishing feature is not the evidence but the enumeration. Other patterns attest to what the issuer gathered; this one attests to what the framework required. The dossier's `manifest` lists every expected component, including the ones with no edge behind them, each marked `provided`, `pending`, `not_applicable` or `withheld` with a reason, and the `attest` field carries the certification the framework puts in the filer's mouth. Omission becomes an attributable claim instead of an inference from silence.
+- **Mechanism:** Each supplied document is wrapped in a [[ref: foreign-artifact-wrapper, Foreign Artifact wrapper]] committing its digest — typically an xSAID, since filings are dominated by PDFs whose bytes cannot be rewritten without breaking them. The wrappers become edges named for their checklist line items, and an `authority` edge binds the filer's role credential, which chains through the organization's identity credential to the authority's own root (see *Binding the Issuer's Authority*). The filing is delivered as a self-contained package rather than published for later retrieval, because it is pushed on a deadline to a recipient known in advance, and the submitter authenticates the act of submission separately from the dossier's own anchor.
+- **Verification:** The authority is simultaneously the root of trust and the relying party (see *Verifier Trust and Root of Trust Management*), so it accepts only chains terminating at its own root and credentials minted under schemas it governs. Its acceptance policy names its own root and the schemas it governs, which in this configuration it can populate authoritatively rather than by judgment, so a credential minted under a schema it never defined is correctly INDETERMINATE rather than refused. Beyond the standard algorithm, it reconciles the manifest against the edges, re-hashes every accompanying document against its wrapper's committed digest, and applies its own policy to the entries the filer marked absent. Because the package is self-contained, the same check can be replayed against the same bytes at any later date, which is what makes the filing auditable rather than merely received.
 
 ## Bibliography
 
