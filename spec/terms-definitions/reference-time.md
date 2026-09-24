@@ -1,3 +1,3 @@
 [[def: reference-time, referenceTime, reference time]]
 
-~ An input to the verification algorithm specifying the point in time at which a dossier's anchors, key state, and revocation status are evaluated. Because KERI preserves historical key state, a reference time lets a verifier determine whether a dossier was valid as of an arbitrary past moment, not only the present.
+~ An input to the verification algorithm specifying the point in time at which a dossier's anchors, key state, and revocation status are evaluated. Because KERI preserves historical key state, a reference time lets a verifier determine whether a dossier was valid as of an arbitrary past moment, not only the present. The reference time is neither the moment verification runs nor an expiry date. For example, an auditor verifying in 2028 whether a dossier was valid during a phone call placed in March 2026 uses the time of the call as the reference time.
