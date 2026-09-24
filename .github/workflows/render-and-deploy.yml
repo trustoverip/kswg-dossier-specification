@@ -66,9 +66,9 @@ jobs:
       #
       # GITHUB_API_TOKEN authenticates the GitHub API calls that resolve external
       # term references (see .env.example). Without it the pipeline runs against the
-      # 60-requests-per-hour unauthenticated limit, which this spec's two external
-      # glossaries can exhaust. The ephemeral GITHUB_TOKEN is sufficient — the
-      # external glossary repos are public and only read access is needed.
+      # 60-requests-per-hour unauthenticated limit, which specs with external
+      # glossaries can exhaust. The ephemeral GITHUB_TOKEN is sufficient when the
+      # glossary repos are public and only read access is needed.
       - name: Collect external references and render
         env:
           GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}

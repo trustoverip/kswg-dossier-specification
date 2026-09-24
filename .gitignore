@@ -40,3 +40,4 @@ $RECYCLE.BIN/
 .*.swp
 .*.swo
 .fuse_hidden*
+.env*
