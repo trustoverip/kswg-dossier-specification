@@ -91,11 +91,13 @@ A dossier MAY contain an unbounded number of edges, reflecting its core purpose 
 
 #### The Dossier as Graph Root
 
-Edges point away from the dossier and never back at it. Within any set of ACDCs presented together for evaluation, the dossier under evaluation MUST be the unique source-only node: no other ACDC in that set may carry an edge whose target is the dossier. This is the structural expression of the issuer-centric model described under *Introducing the Dossier*. The dossier points down at the evidence it collects and is not itself collected by anything in the presentation.
+An edge refers to its target by SAID, and an ACDC's SAID cannot be computed until its content is final. An ACDC can therefore point only at ACDCs that already existed when it was made, and edges can never form a cycle. A dossier and its evidence form a directed acyclic graph with the dossier at the top.
 
-The invariant earns its keep at verification time, because it is what lets a verifier find the dossier in a package it was handed rather than one it fetched. Given a bundle of ACDCs, the node that is no edge's target is the root, and a package containing two such nodes, or none, is malformed in a way the verifier can detect before doing any cryptographic work.
+That structure does not by itself tell a verifier which ACDC is the dossier. A verifier that resolves a citation knows, because the citation names the dossier's SAID. A verifier that is handed a package (see *Presentation as a Self-Contained Package*) may not: nothing outside the package names the dossier, and the package may hold dozens of ACDCs. This specification fills that gap with a rule about what may be presented together.
 
-The requirement is about a single presentation, not about dossiers in general. A dossier is routinely the target of an edge from *somewhere* — the `prev` edge of its own successor version, an annotation edge in a later version that rules on evidence it carried, an edge from an unrelated dossier that cites it as evidence in turn. None of that violates the invariant. What is forbidden is presenting a dossier for evaluation alongside an ACDC that points at it and expecting the verifier to work out which of the two is the subject. Where an earlier version is genuinely part of what is being presented, the dossier under evaluation is the newest one, and it is that one that must be the unique root.
+Within any set of ACDCs presented together for evaluation, the dossier under evaluation MUST be the only ACDC that no other ACDC in the set points to. A verifier finds the dossier by finding that ACDC. If more than one ACDC in the set qualifies, the set is malformed, and the verifier can reject it before doing any cryptographic work.
+
+The rule governs a single presentation, not dossiers in general. Other ACDCs often point at a dossier: a later version points at an earlier one through its `prev` edge or an annotation edge, and an unrelated dossier may cite it as evidence. Those ACDCs are legitimate. They cannot be presented alongside a dossier they point at, unless one of them is itself the subject. For example, if versions 1 and 2 of a dossier are presented together, version 2's `prev` edge points at version 1, so version 2 is the only ACDC nothing points to, and it is the dossier under evaluation.
 
 ### Base JSON-Schema Definition
 
@@ -341,7 +343,7 @@ The defining property is self-containment. A conforming package MUST be verifiab
 
 Two further consequences follow:
 
-- The graph-root invariant described under *The Dossier as Graph Root* is how a verifier identifies which ACDC in the package is the subject of the evaluation.
+- No citation names the dossier, so a verifier identifies it by the rule under *The Dossier as Graph Root*: it is the only ACDC in the package that no other ACDC points to.
 - The act of delivery SHOULD itself be authenticated, separately from the dossier's own anchor. A dossier's anchor establishes who assembled the collection and when; it says nothing about who transmitted it, to whom, or under what obligation. Where submission has consequences of its own — a filing deadline, a certification made to a regulator — the submitter SHOULD sign or anchor the transmission, so that the act of submitting is as non-repudiable as the content submitted.
 
 Self-containment is also what makes a package durable evidence rather than a delivery mechanism. The same bytes can be replayed years later, against the same algorithm and the same referenceTime, by someone who was not party to the original exchange and cannot reach anyone who was.
@@ -353,7 +355,7 @@ Self-containment is also what makes a package durable evidence rather than a del
 Verification of a dossier yields one of three outcomes. Two of them are the familiar ones; the third exists because of the layered verification described under *Base JSON-Schema Definition*, where cryptographic validation is universal but semantic validation is not.
 
 - **VALID.** Every check in the algorithm below passed, and every credential reachable from the dossier carries a schema the verifier governs. The verifier can act on the dossier.
-- **INVALID.** A check failed definitively: a SAID that does not recompute, an anchor that is absent or made under keys that were not authoritative, a chain that does not reach a trusted root, a credential revoked as of the referenceTime, an artifact whose bytes do not match its committed digest, a violated graph-root invariant. The verifier MUST NOT act on the dossier.
+- **INVALID.** A check failed definitively: a SAID that does not recompute, an anchor that is absent or made under keys that were not authoritative, a chain that does not reach a trusted root, a credential revoked as of the referenceTime, an artifact whose bytes do not match its committed digest, a package that breaks the rule under *The Dossier as Graph Root*. The verifier MUST NOT act on the dossier.
 - **INDETERMINATE.** The structure and the cryptography are sound, but the verifier encountered something it is not competent to judge — most commonly a credential in the graph whose schema is outside the set the verifier governs. Nothing is known to be wrong. The verifier simply cannot say the dossier is good, and MUST NOT treat it as though it could.
 
 The third outcome matters more than it may appear. A dossier is designed to aggregate evidence from domains its verifier may not know, so meeting an unrecognized schema is an ordinary event rather than an error. A verifier with only two outcomes must either reject those dossiers, which makes the extensibility the model depends on unusable, or accept them, which silently confers trust on credentials nobody evaluated. Naming the third case lets a verifier report exactly what it could not decide, and lets a governing framework decide whether that is tolerable in its context.
@@ -378,7 +380,7 @@ The verification process for a dossier requires a citation and a [[ref: referenc
 
 2. Validate dossier integrity: calculate the SAID of the retrieved data and ensure it matches the expected SAID from the citation.
 
-3. Check the graph root: where the dossier was presented as part of a package rather than fetched by citation, confirm that it is the unique source-only node among the ACDCs presented, as required under *The Dossier as Graph Root*. A package with more than one such node, or none, is INVALID.
+3. Check the graph root: where the dossier was presented as part of a package rather than fetched by citation, confirm that it is the only ACDC presented that no other presented ACDC points to, as required under *The Dossier as Graph Root*. A package in which more than one ACDC meets that test is INVALID.
 
 4. Check governance: confirm that the dossier's own schema appears in the governed set named by the acceptance policy, and apply the same test to every credential reached during traversal in step 7. A schema outside the governed set yields INDETERMINATE.
 
