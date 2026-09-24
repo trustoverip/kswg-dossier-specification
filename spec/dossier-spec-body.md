@@ -350,55 +350,68 @@ Self-containment is also what makes a package durable evidence rather than a del
 
 ### Serving and Archiving a Dossier
 
-The *Citation* section above says that a citation resolves to "the ACDC and its associated KERI proofs". This section says what those proofs are and how they are served. The response to a citation is a self-contained package, as described in the previous section, obtained by retrieval rather than by delivery. The requirements below apply to that response, and to any package serialized in CESR.
+The *Citation* section says that a citation resolves to "the ACDC and its associated KERI proofs". This section defines those proofs and the form in which they are served. What a citation returns is a package in the sense of *Presentation as a Self-Contained Package*, fetched by the verifier instead of delivered to it, so everything below applies to packages as well.
 
 #### What a Citation Returns
 
-A resource that serves a dossier MUST return a CESR stream [[3]] and SHOULD label it with the media type `application/cesr`. The stream MUST NOT be wrapped in a JSON envelope, and it MUST NOT be wrapped in a single KERI reply (`rpy`) or exchange (`exn`) message.
+A resource that serves a dossier MUST return a CESR stream [[3]] and SHOULD label it with the media type `application/cesr`. It MUST NOT wrap the stream in another structure, such as a JSON object or a single KERI reply (`rpy`) or exchange (`exn`) message.
 
-Each element of the stream carries its own proof: key events carry signatures and witness receipts, and ACDCs and transaction events carry attachments that locate the key events anchoring them. A wrapper adds bytes and a second parser without adding any assurance.
+No wrapper is needed because every element of the stream carries its own proof. Key events carry signatures and witness receipts. ACDCs and transaction events carry attachments that locate the key events that anchor them. A wrapper would add a second parser and no assurance.
 
 The stream MUST contain:
 
-1. The dossier ACDC, and every ACDC reachable from it by following edges, to the extent that the dossier discloses them. Each ACDC MUST carry the attachment that locates the event anchoring it.
-2. For every transaction event log (TEL) involved in anchoring those ACDCs, the registry inception and every event for each ACDC in the graph, up to the time the stream was produced. A revocation, if one exists, is therefore part of the stream.
-3. The complete key event log (KEL) of every AID whose anchor the algorithm checks (every issuer in the graph, and every endorser and finalizer in a joint issuance), and of every AID that delegates to one of those, directly or transitively, up to and including an AID with no delegator. Each key event MUST carry its controller signatures and enough witness receipts to satisfy its witness threshold.
+1. The dossier ACDC, and every ACDC reachable from it by following edges, except any that the dossier deliberately withholds (see *Graduated Disclosure Mechanism*). Each ACDC MUST carry the attachment that locates the event anchoring it.
+2. For each ACDC anchored through a transaction event log (TEL), the registry's inception event and every event about that ACDC up to the [[ref: capture-time, capture time]]. If the ACDC has been revoked, the revocation is therefore included.
+3. The complete key event log (KEL) of each AID whose anchors the verification algorithm checks. These are the issuer of every ACDC in the stream and, in joint issuance, each endorser and the finalizer. The stream MUST also contain the KEL of every AID that delegates to one of those AIDs, directly or through a chain of delegations. Each key event MUST carry its controller signatures and enough witness receipts to meet its witness threshold.
 
-Item 3 includes the root of any delegation chain. A root the verifier already trusts, such as the root of a credential ecosystem's governance framework, is still included. Including a KEL does not make its AID trusted; that remains a decision of the verifier's acceptance policy. But a stream that stops one level short of the root is not verifiable from its own contents, which is the property the previous section requires.
+Elements SHOULD appear in dependency order: a delegator's KEL before the KEL it delegates, and a key event before the TEL event or ACDC it anchors. Each element SHOULD appear only once. A verifier MUST accept a stream that departs from either recommendation.
 
-An element SHOULD appear after every element it depends on: a delegator's KEL before the delegated KEL, a key event before the transaction event or ACDC it anchors. An element SHOULD appear only once. A verifier MUST tolerate both elements out of order and duplicates, since KERI implementations escrow the former and discard the latter.
+Item 3 includes the KEL at the root of a delegation chain even when the verifier already trusts that root. For example, a stream that supports a vLEI includes the KEL of GLEIF's root AID. Including a KEL does not make its AID trusted; the verifier's acceptance policy decides that. Without the root's KEL, though, the verifier cannot check the delegation that the next KEL down depends on, and the package is not self-contained.
 
-Where the dossier withholds an edge target under graduated disclosure, the stream omits it as well. The verifier cannot evaluate what it was not given, and a node it cannot evaluate yields INDETERMINATE, as described under *Verification Outcomes*. Opaque artifacts referenced by [[ref: foreign-artifact-wrapper, Foreign Artifact wrappers]] are not part of the stream; step 9 of the algorithm treats them as available or not.
+A verifier cannot evaluate an ACDC that the dossier withholds, so it returns INDETERMINATE for that part of the graph (see *Verification Outcomes*). Opaque artifacts referenced by [[ref: foreign-artifact-wrapper, Foreign Artifact wrappers]] are not part of the stream; step 9 of the algorithm handles them.
 
-#### What a Snapshot Proves
+#### Capture Time and Reference Time
 
-A stream is its publisher's view of each log at the moment the stream was produced. Call that moment T. The stream establishes issuance, key state, and revocation status up to T. It cannot establish that nothing happened after T, because the absence of an event is not something a log can prove about its own future. A rotation, a revocation, or a duplicitous event that occurs after T is invisible in it.
+Three moments matter when a served dossier is evaluated, and they are easy to confuse:
 
-This has three consequences for a verifier:
+- The capture time is when the stream was produced. For a verifier that fetches the stream, it is the moment of retrieval.
+- The referenceTime is the moment as of which the verifier asks whether the dossier was valid.
+- The verification time is when the verifier runs the algorithm.
 
-1. When the referenceTime is later than T, the verifier MUST obtain the events recorded after T for every AID and registry in the graph, from witnesses or watchers of those AIDs, before it returns VALID. If it cannot, the outcome is INDETERMINATE.
-2. When the referenceTime is not later than T, the stream is sufficient for the checks in the algorithm. The verifier SHOULD still consult current state where it can, because a later recovery rotation can supersede interaction events recorded before T, and duplicity in an issuer's history may only surface afterward.
-3. T is not carried in the stream in any verifiable form. Some implementations attach first-seen timestamps to events, but those are unsigned assertions by the publisher. A verifier that archives a stream MUST record T itself, as the time of retrieval, along with the URL it retrieved from.
+For example, suppose a phone call placed on 3 March relies on a dossier. An auditor fetches the dossier's stream on 10 September and archives it. In 2028 the auditor runs the algorithm on the archived stream to ask whether the dossier was valid during the call. The capture time is 10 September, the referenceTime is 3 March, and the verification time is 2028. A verifier checking the call while it is in progress has all three times nearly equal.
 
-An archived stream, kept with the time and place it was retrieved and the per-step results the algorithm recommends retaining, makes a verification reproducible. It lets a later auditor replay the evaluation and reach the same verdict on the same evidence. It does not guarantee that the verdict would be the same on the evidence available at the later date, and an auditor asking that second question must refresh the logs as a verifier would.
+#### What a Stream Proves
+
+A stream shows each log as its publisher held it at the capture time. It establishes issuance, key state, and revocation status up to that moment. It cannot show that nothing happened afterward. A rotation, a revocation, or a duplicitous event that occurs after the capture time does not appear in it.
+
+This has two consequences for a verifier:
+
+1. If the referenceTime is later than the capture time, the stream says nothing about the interval between them. Before it returns VALID, the verifier MUST obtain the events recorded in that interval for every AID and registry in the graph, from witnesses or watchers. If it cannot, the outcome is INDETERMINATE. This is the usual case for a verifier holding a cached stream. A verifier that fetches a stream to check a transaction already under way is not in this case, because the fetch happens after the transaction began.
+2. If the referenceTime is at or before the capture time, the stream contains everything the algorithm checks. This is the usual case for an audit, as in the example above. The verifier SHOULD still consult witnesses or watchers when it can, because two kinds of later event can change the answer: a recovery rotation can supersede interaction events recorded before the capture time, and duplicity in an issuer's history can come to light later.
+
+#### Archiving a Stream
+
+A stream does not record its own capture time in any verifiable form. Some implementations attach first-seen timestamps to events, but those are unsigned assertions by the publisher. A verifier that archives a stream MUST record the capture time and the URL it retrieved the stream from. It SHOULD also keep any signed, dated key state notices it obtained from witnesses or watchers at that time, since they are evidence of the capture time that does not depend on the verifier's own clock.
+
+An archived stream, kept with its capture time, its source, and the per-step results that the algorithm recommends retaining, lets a later auditor rerun the evaluation and reach the same verdict on the same evidence. It does not show whether the verdict would survive evidence that appeared later. An auditor who needs that answer must consult witnesses or watchers, as any verifier would.
 
 #### Locating Witnesses
 
-The inception and rotation events in a KEL name each AID's witnesses by AID, not by network address. A verifier following consequence 1 above needs addresses.
+Inception and rotation events name each AID's witnesses by AID, not by network address. A verifier that must consult witnesses needs addresses.
 
-The stream SHOULD therefore include, for each AID in the graph, KERI reply messages on the `/loc/scheme` route that bind that AID's current witnesses to their URLs, and on the `/end/role` route where the AID has authorized other endpoints. These replies are signed and dated. They describe where each witness could be reached as of T, and nothing more.
+The stream SHOULD therefore include, for each AID in the graph, KERI reply messages on the `/loc/scheme` route that give the URLs of that AID's witnesses, and on the `/end/role` route where the AID has authorized other endpoints. These replies are signed and dated, and they say where each witness could be reached at the capture time.
 
-Witnesses change over time. A change made after T appears in the KEL itself, in the witness additions and removals of a later rotation event, so a verifier that can reach any current witness of an AID can follow the change. A verifier that can reach none of them has to discover the AID's witnesses by other means. Discovery across an ecosystem is a KERI concern rather than a dossier concern, and this specification does not define it.
+Witnesses change. A change made after the capture time is recorded in a later rotation event of the AID's KEL, so a verifier that can reach any current witness learns of the change from it. A verifier that can reach none of the listed witnesses has to discover the AID's witnesses some other way. That problem is not specific to dossiers, and this specification does not define a solution to it.
 
 #### HTTP Guidance (Informative)
 
 This subsection is non-normative. It records practices that make a served dossier easy to fetch, cache, and verify over HTTP.
 
-- The path contains the dossier's SAID. This lets a verifier perform step 2 of the algorithm against the URL it used, without trusting the server.
-- A successful GET returns status 200 with `Content-Type: application/cesr`, and honors `Accept: application/cesr`. A request for an unknown SAID returns 404, not an empty success.
+- The path contains the dossier's SAID, so a verifier can perform step 2 of the algorithm against the URL it used without trusting the server.
+- A successful GET returns status 200 with `Content-Type: application/cesr`, and the server honors `Accept: application/cesr`. A request for an unknown SAID returns 404, not an empty success.
 - A dossier intended for public citation permits cross-origin GET, for example with `Access-Control-Allow-Origin: *`, so that a verifier running in a browser can retrieve it.
-- The response carries a strong `ETag`, such as a digest of the body, and supports conditional GET and HEAD.
-- The response is not marked immutable. The dossier's SAID never changes, but the stream grows when an issuer rotates keys or a credential in the graph is revoked, so a cache revalidates it (`Cache-Control: no-cache`) rather than keeping it indefinitely. `no-store` is unnecessary, since the content is public and self-authenticating.
+- The response carries a strong `ETag`, such as a digest of the body, and the server supports conditional GET and HEAD.
+- The response is not marked immutable. The dossier's SAID never changes, but its stream grows when an issuer rotates keys or a credential in the graph is revoked, so a cache revalidates it (`Cache-Control: no-cache`) instead of keeping it indefinitely. `no-store` is unnecessary, because the content is public and self-authenticating.
 
 ### Verification: Algorithm for Validation
 
@@ -428,7 +441,7 @@ Stating the policy explicitly, rather than letting it emerge from whatever schem
 
 The verification process for a dossier requires a citation and a [[ref: reference-time, referenceTime]] as inputs, together with the acceptance policy above. To support joint issuance, the algorithm follows these steps:
 
-1. Fetch dossier: resolve the citation to retrieve the dossier ACDC and the stream that accompanies it, as described under *Serving and Archiving a Dossier*. Record when, and from where, the stream was retrieved.
+1. Fetch dossier: resolve the citation to retrieve the dossier ACDC and the stream that accompanies it, as described under *Serving and Archiving a Dossier*. Record its capture time and source, as described under *Archiving a Stream*.
 
 2. Validate dossier integrity: calculate the SAID of the retrieved data and ensure it matches the expected SAID from the citation.
 
