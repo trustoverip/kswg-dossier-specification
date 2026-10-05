@@ -106,7 +106,7 @@ A compliant schema for a dossier:
         "allOf": [
             { 
                 "description": "reference to dossier base schema",
-                "$ref": "EKuLzS_oN_mIao5og1NOujtF2QMXloiMCZP7xuAR5tY7"
+                "$ref": "ENroDvI_lXRUa3p1UCxU6Pxp0DWDS1yZNexCq_1TQlcj"
             },
             {
                 "type": "object",
@@ -211,6 +211,17 @@ requirements:
    CESR-encoded hash, and a `content_type` field holding an IANA MIME type
    string.
 3. The `content_digest` SHOULD be a bSAID or xSAID as defined in [[8]].
+4. Its `a` section MUST contain a `filename` field when `content_digest` holds
+   an xSAID, and SHOULD contain one otherwise.
+
+The `filename` requirement follows from how the externalized SAID algorithm
+works. An xSAID is carried in the artifact's filename rather than in its bytes,
+so the filename is an input to the identifier rather than incidental packaging.
+A wrapper that omits it leaves a verifier unable to recompute what the wrapper
+committed to. For bSAIDs and plain hashes the filename is not load-bearing, but
+recording it is still worthwhile: it is what lets a verifier report *which*
+artifact failed when a digest does not match, and artifacts routinely travel
+alongside a dossier as a set of files rather than one at a time.
 
 A reference schema and example for a Foreign Artifact ACDC are published
 separately at [[9]]. Implementers MAY define specialized schemas that
@@ -302,7 +313,9 @@ The verification process for a dossier requires a citation and a [[ref: referenc
 
 6. Check revocation status: for the dossier and every node in the evidence graph, consult the relevant KELs or status registries for revocation events effective at the referenceTime.
 
-7. Apply semantic rules: apply application-specific policy rules once cryptographic validation is complete.
+7. Check artifact digests: for every node in the graph that is a [[ref: foreign-artifact-wrapper, Foreign Artifact wrapper]] whose artifact accompanies the dossier or is otherwise available to the verifier, recompute the artifact's digest using the algorithm identified by the CESR primitive code of the wrapper's `content_digest`, and compare. A mismatch MUST fail verification, and the verifier SHOULD report which artifact failed. Where the artifact is not available, the wrapper itself may still verify, but the artifact does not: a verifier MUST NOT treat a valid wrapper as evidence that the bytes it describes are intact, and SHOULD report the artifact as unchecked rather than as passing.
+
+8. Apply semantic rules: apply application-specific policy rules once cryptographic validation is complete.
 
 ### The Attributes Section: Proximate Metadata
 
@@ -400,7 +413,26 @@ additional fields appropriate to their domain.
   Both fields MAY be present simultaneously: `gov` describes who is
   overseeing the dossier, while `gov_rules` describes what procedural
   constraints applied to the underlying investigation.
-  
+
+- **`attest`**: A declaration the issuer makes in their own voice about the collection, as part of the act of issuing it. An object with a `statement` field holding human-readable text, and a `confirmed` boolean recording whether the issuer affirms that statement. Example: `{"statement": "I certify that the materials enumerated here are complete and accurate to the best of my knowledge.", "confirmed": true}`. The boolean is not redundant with the issuer's anchor. An anchor establishes that the issuer issued this dossier; `confirmed` establishes whether the issuer adopted the declaration it contains, so a dossier can carry a required declaration and record that it was withheld. Where the declaration has legal effect, the exact wording usually comes from the governing framework, and `gov` or `gov_rules` SHOULD identify that framework.
+
+- **`manifest`**: An enumeration of the components the dossier is expected to contain, keyed by an identifier drawn from the governing framework. Each entry is an object carrying at minimum a `status`, and optionally a human-readable `name`, a `reason`, a `due` date, and an `edge` field naming the edge that carries that component's evidence. The following statuses are defined; implementers MAY define others, and SHOULD reference the vocabulary their framework uses:
+
+    * `provided` — the component is present, and `edge` names the edge that carries it.
+    * `pending` — the component is required and will follow, with `due` giving the date it is expected by.
+    * `not_applicable` — the component is not required of this issuer in this instance, with `reason` explaining why.
+    * `withheld` — the component is required, is not supplied, and is not promised, with `reason` recording the grounds.
+
+#### Attesting to Completeness
+
+The [[ref: manifest]] field exists because some dossiers must attest to their own negative space. In most of the patterns this specification describes, a dossier asserts what its issuer gathered, and a verifier's question is whether each item is authentic. In regulated filing, accreditation, audit and discovery, the harder question is the opposite one: is anything missing, and was the omission disclosed? The consequential failure is rarely a forged document. It is an item that was required, was not supplied, and was never mentioned.
+
+A dossier without a manifest cannot distinguish the three cases a supervising authority most needs to tell apart: a component that is absent because it does not apply, one that is absent because it is still coming, and one that is absent because the issuer chose not to supply it. Enumerating every expected component, including the ones with no corresponding edge, makes each of those an explicit, attributable claim rather than an inference from silence — and because the enumeration is inside the dossier, the issuer's anchor commits to it exactly as it commits to the evidence graph. An issuer who omits a required item and marks it `not_applicable` has made a false statement that survives in a duplicity-evident log, which is a materially different position from having simply left it out.
+
+A manifest entry that names an edge does not violate the rule that the `a` section MUST NOT carry evidenta. The entry carries no evidence; it carries the issuer's account of what the collection was supposed to contain, and a pointer to where the corresponding evidence sits in `e`. The evidence itself remains reachable only through edges, and a verifier that ignores the manifest entirely still recovers the full evidence graph. What it loses is the issuer's claim about completeness, which is metadata about the collection rather than a member of it.
+
+Verifiers SHOULD treat manifest processing as semantic validation rather than cryptographic validation. Whether a `withheld` component is acceptable, or a `pending` one is overdue, is a policy question belonging to the governing framework. What this specification requires is that where a manifest entry has `status` `provided`, its `edge` field MUST name an edge that is present in the dossier's `e` section, so that the two accounts of the collection cannot silently disagree.
+
 ## Joint Issuance
 A dossier may be assembled and issued by a single party. For example, an artist who wishes to collect cryptographic evidence of their creations may do so as a solo activity. However, many dossiers snapshot evidence contributions from multiple parties, and so represent a group work product that needs an aggregate approval mechanism. In such cases, authorizing the issuance of the ACDC that references all the individual pieces of evidence is managed with joint issuance.
 
@@ -518,6 +550,10 @@ The dossier model operates on a decentralized root of trust. A verifier does not
 
 The foundation of this trust is the KERI witness infrastructure. Witnesses are independent services that act as notaries for an AID's KEL. By requiring an issuer to report its key events to a set of witnesses, the system gains high availability and duplicity detection. Verifiers SHOULD consult multiple witnesses to ensure they have a consistent and complete view of an issuer's KEL, thereby protecting against duplicity and compromise.
 
+One configuration deserves separate mention, because it is common in regulated settings and because it simplifies the trust decision considerably. Where a dossier is submitted to the same authority that roots the issuer's credential chain — a regulator receiving a filing from an entity it licensed, an accreditor receiving a renewal from a body it accredited — the verifier and the root of trust are the same party. The verifier is then not weighing whether to extend trust to someone else's root. It is confirming that the chain terminates at itself, and rejecting anything that does not.
+
+This closed loop removes most of the judgment from trust configuration, but it does not remove the configuration. The authority must still state which root AIDs it recognizes as its own and which schemas it governs, because a chain that reaches the right root through a credential type the authority never defined is not something the authority can evaluate. It also does not remove the need for witnesses: an authority verifying a submission against its own root still depends on witnessed KELs to detect duplicity in the submitter's key history, and SHOULD apply the same multi-witness discipline it would apply to a stranger.
+
 ### Long-Term Auditability and Historical Analysis
 
 The KERI-based dossier ecosystem supports long-lived auditing. Because KELs provide a complete, verifiable, and sequenced history of an identifier's key state, a verifier can perform validation for any arbitrary point in the past. 
@@ -613,6 +649,15 @@ This profile demonstrates the **Open-Endorsement Dossier** pattern, designed for
 - **Key Concept: Asynchronous Threshold Satisfaction.** Unlike a standard multisig group that requires tight coordination among a fixed set of peers, this pattern allows any AID that satisfies the criteria defined in the dossier schema to contribute an endorsement.
 - **Mechanism:** The coordinator initiates the dossier and distributes the candidate ACDC. Because the qualified endorser set is open-ended, the dossier uses the `MxQ` operator to define the conditions for validity: enough qualified, unique endorsements that their weights sum to unity (with a uniform per-member weight `w`, that means at least `1/w` endorsers), where each endorser proves qualification through the proof schema named in the operator's `qs` field. Participants signify their agreement by issuing a qualified Endorsement ACDC and anchoring it in their individual KELs.
 - **Verification:** A verifier confirms the dossier is valid by observing that enough qualified endorsers' KELs carry a valid endorsement of the dossier SAID for their weights to reach unity. The coordinator may set the dossier's `fi` field and finalize the issuance once that point is reached, simplifying this check for third parties.
+
+### Regulatory Filing: The Attested Submission Dossier
+
+This profile illustrates the **Attested Submission Dossier** pattern, which covers a recurring obligation to file a defined set of materials with a supervising authority: an annual accreditation renewal, a licensing return, an audit package, a grant report, a customs declaration. These filings are alike in shape. A checklist fixed by the authority says what must be supplied; a named individual assembles it and certifies it on the organization's behalf; and the authority that receives it is the same body that authorized the filer to act.
+
+- **Goal:** Discharge a filing obligation with one self-contained object that establishes what was supplied, what was not, who certified it, and under what authority — and that remains verifiable years later, during an audit of the filing itself.
+- **Key Concept: Attested Completeness.** The distinguishing feature is not the evidence but the enumeration. Other patterns attest to what the issuer gathered; this one attests to what the framework required. The dossier's `manifest` lists every expected component, including the ones with no edge behind them, each marked `provided`, `pending`, `not_applicable` or `withheld` with a reason, and the `attest` field carries the certification the framework puts in the filer's mouth. Omission becomes an attributable claim instead of an inference from silence.
+- **Mechanism:** Each supplied document is wrapped in a [[ref: foreign-artifact-wrapper, Foreign Artifact wrapper]] committing its digest — typically an xSAID, since filings are dominated by PDFs whose bytes cannot be rewritten without breaking them. The wrappers become edges named for their checklist line items, and a further edge binds the filer's role credential, which chains through the organization's identity credential to the authority's own root. The whole package — dossier, wrappers, credential chain, and the supporting KELs and TELs — is delivered to the authority together with the documents, rather than published for later retrieval, because a filing is pushed on a deadline rather than cited on demand.
+- **Verification:** The authority is simultaneously the root of trust and the relying party (see *Verifier Trust and Root of Trust Management*), so it accepts only chains terminating at its own root and credentials minted under schemas it governs. Beyond the standard algorithm, it reconciles the manifest against the edges, re-hashes every accompanying document against its wrapper's committed digest, and applies its own policy to the entries the filer marked absent. Because the package is self-contained, the same check can be replayed against the same bytes at any later date, which is what makes the filing auditable rather than merely received.
 
 ## Bibliography
 
