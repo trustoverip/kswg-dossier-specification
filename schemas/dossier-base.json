@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "EKuLzS_oN_mIao5og1NOujtF2QMXloiMCZP7xuAR5tY7",
+  "$id": "ENroDvI_lXRUa3p1UCxU6Pxp0DWDS1yZNexCq_1TQlcj",
   "title": "Dossier Base Schema",
   "description": "Base schema defining the canonical structure of a Dossier ACDC. A schema S IS-A dossier iff S's top-level allOf array contains a $ref to this schema's SAID, or recursively to another schema that IS-A dossier. A dossier SHOULD NOT include an issuee; all evidence MUST be carried in e, never in a.",
   "type": "object",
@@ -124,6 +124,59 @@
             "fi": {
               "type": "string",
               "description": "Finalization identifier. Optional AID used in joint issuance. When present and non-null, it tells a verifier to expect a finalization event for this dossier's joint issuance in the KEL of the named AID, which collects threshold-satisfying proofs in one place. When absent or null, no finalization event is promised and a verifier must gather endorsements from the participants' individual KELs."
+            },
+            "attest": {
+              "type": "object",
+              "description": "Declaration the issuer makes in their own voice about the collection, as part of the act of issuing it. The anchor establishes that the issuer issued the dossier; confirmed establishes whether the issuer adopted the declaration it carries, so a required declaration can be present and recorded as withheld.",
+              "additionalProperties": true,
+              "required": [
+                "statement",
+                "confirmed"
+              ],
+              "properties": {
+                "statement": {
+                  "type": "string",
+                  "description": "Human-readable text of the declaration. Where the declaration has legal effect, its wording usually comes from the governing framework named by gov or gov_rules."
+                },
+                "confirmed": {
+                  "type": "boolean",
+                  "description": "Whether the issuer affirms the statement."
+                }
+              }
+            },
+            "manifest": {
+              "type": "object",
+              "description": "Enumeration of the components the dossier is expected to contain, keyed by an identifier drawn from the governing framework, including components with no corresponding edge. Lets a dossier attest to its own negative space: an omission becomes an attributable claim rather than an inference from silence.",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "description": "Disposition of this component. Defined values: provided (present, with edge naming the edge that carries it); pending (required and to follow, with due); not_applicable (not required of this issuer in this instance, with reason); withheld (required, not supplied, not promised, with reason). Implementers may define others appropriate to their framework."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Human-readable name of the component."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Grounds for a status of not_applicable or withheld."
+                  },
+                  "due": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 date by which a pending component is expected."
+                  },
+                  "edge": {
+                    "type": "string",
+                    "description": "Name of the edge in e that carries this component's evidence. Required when status is provided, and must name an edge present in the dossier. This is a pointer into the evidence graph, not evidence: a verifier that ignores the manifest still recovers the full graph from e."
+                  }
+                }
+              }
             }
           }
         }
