@@ -2,7 +2,7 @@
 
 ### Core Structure: The Dossier as an ACDC
 
-A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification [[2]].
+A dossier MUST be a valid Authentic Chained Data Container (ACDC) as defined in the ACDC specification [\[c\]](#ref-c).
 
 ### How a Dossier Is Issued: Anchoring, Not Attached Signatures
 
@@ -84,10 +84,10 @@ The issuer of a dossier is the entity that curates the collection of [[ref: evid
 
 ### The Edges Attribute: Linking to Evidence
 
-The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external [[ref: evidence]]. This graph is contained within an [[ref: edges]] block (`e`), as defined in the ACDC specification [[2]]. This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.
+The primary payload of a dossier is not a set of direct claims, but rather a graph of references to external [[ref: evidence]]. This graph is contained within an [[ref: edges]] block (`e`), as defined in the ACDC specification [\[c\]](#ref-c). This block MUST contain a JSON object where each key is a semantic label for an edge, and each value is an object describing the link to the external evidence.
 
 A dossier MAY contain an unbounded number of edges, reflecting its core purpose of aggregating an arbitrary quantity and variety of evidence. The field names (keys) for these edges MAY be any valid JSON string, allowing issuers to provide semantically meaningful labels for the linked evidence (e.g.,
-"vettingCredential", "forensicReport_01", "tnAllocationProof"), as demonstrated in the Verifiable Voice Protocol (VVP) specification.
+"vettingCredential", "forensicReport_01", "tnAllocationProof"), as demonstrated in the Verifiable Voice Protocol (VVP) specification [\[1\]](#bib-1).
 
 #### The Dossier as Graph Root
 
@@ -97,7 +97,7 @@ That structure does not by itself tell a verifier which ACDC is the dossier. A v
 
 Within any set of ACDCs presented together for evaluation, the dossier under evaluation MUST be the only ACDC that no other ACDC in the set points to. A verifier finds the dossier by finding that ACDC. If more than one ACDC in the set qualifies, the set is malformed, and the verifier can reject it before doing any cryptographic work.
 
-This rule is not peculiar to dossiers. The ACDC specification [[2]] already requires that the graph disclosed in any one issuance or presentation exchange (IPEX) have a single source node, its origin node, and that several unchained ACDCs be gathered under a bespoke ACDC whose edges reach all of them. A dossier is such an origin node, and this section applies the same requirement to anything presented with it.
+This rule is not peculiar to dossiers. The ACDC specification [\[c\]](#ref-c) already requires that the graph disclosed in any one issuance or presentation exchange (IPEX) have a single source node, its origin node, and that several unchained ACDCs be gathered under a bespoke ACDC whose edges reach all of them. A dossier is such an origin node, and this section applies the same requirement to anything presented with it.
 
 The rule governs a single presentation, not dossiers in general. Other ACDCs often point at a dossier: a later version points at an earlier one through its `prev` edge or an annotation edge, and an unrelated dossier may cite it as evidence. Those ACDCs are legitimate. They cannot be presented alongside a dossier they point at, unless one of them is itself the subject. For example, if versions 1 and 2 of a dossier are presented together, version 2's `prev` edge points at version 1, so version 2 is the only ACDC nothing points to, and it is the dossier under evaluation.
 
@@ -213,12 +213,12 @@ standard ACDC saidification algorithm, because that algorithm assumes JSON
 content that can be canonicalized and rewritten.
 
 The solution is to give the artifact a cryptographic identity using one of the
-algorithms defined in the *Bytewise and Externalized SAIDs* specification [[8]],
+algorithms defined in the *Bytewise and Externalized SAIDs* specification [\[5\]](#bib-5),
 and then issue a [[ref: foreign-artifact-wrapper, Foreign Artifact ACDC]] that attests to the [[ref: foreign-artifact, artifact]]'s identity
 and provenance. The resulting wrapper is a standard ACDC and can be linked into
 a dossier edge like any other [[ref: evidentum]].
 
-Two algorithms are defined in [[8]] for saidifying opaque artifacts:
+Two algorithms are defined in [\[5\]](#bib-5) for saidifying opaque artifacts:
 
 - The **bytewise SAID algorithm** (producing a **bSAID**) is appropriate for
   artifacts whose bytes can be rewritten after creation using native tooling —
@@ -226,14 +226,14 @@ Two algorithms are defined in [[8]] for saidifying opaque artifacts:
   where a comment can be inserted. The artifact receives an insertion point
   containing the SAID, making the identifier intrinsic to the artifact's byte
   stream. A verifier can recover the SAID by scanning the raw bytes for the
-  `SAID:` delimiter defined in [[8]].
+  `SAID:` delimiter defined in [\[5\]](#bib-5).
 
 - The **externalized SAID algorithm** (producing an **xSAID**) is appropriate
   for artifacts that cannot safely be rewritten after creation — for example,
   a compressed archive, an encrypted file, or a PDF whose cross-reference table
   would be invalidated by arbitrary byte modification. The SAID is carried in
   the filename under a constraint expressed inside the file content via the
-  `XSAID:` delimiter defined in [[8]].
+  `XSAID:` delimiter defined in [\[5\]](#bib-5).
 
 When neither algorithm is practical — for example, a data stream that was
 captured without an insertion point — the `content_digest` field of the wrapper
@@ -252,7 +252,7 @@ requirements:
 2. Its `a` section MUST contain a `content_digest` field holding a
    CESR-encoded hash, and a `content_type` field holding an IANA MIME type
    string.
-3. The `content_digest` SHOULD be a bSAID or xSAID as defined in [[8]].
+3. The `content_digest` SHOULD be a bSAID or xSAID as defined in [\[5\]](#bib-5).
 4. Its `a` section MUST contain a `filename` field when `content_digest` holds
    an xSAID, and SHOULD contain one otherwise.
 
@@ -266,7 +266,7 @@ artifact failed when a digest does not match, and artifacts routinely travel
 alongside a dossier as a set of files rather than one at a time.
 
 A reference schema and example for a Foreign Artifact ACDC are published
-separately at [[9]]. Implementers MAY define specialized schemas that
+separately at [\[6\]](#bib-6). Implementers MAY define specialized schemas that
 extend the reference schema for domain-specific artifact types, provided the
 minimum requirements above are satisfied.
 
@@ -339,7 +339,7 @@ A [[ref: citation]] is a reference that allows a verifier to locate and retrieve
 
 Citation assumes the verifier goes and gets the dossier. Some dossiers are instead delivered, complete, to a party who is expecting them: a filing submitted to a regulator on a deadline, a disclosure produced to opposing counsel, an evidence package handed to an auditor. In these cases there is no advantage in publishing an OOBI for a recipient who is known in advance, and often a positive requirement not to publish anything at all.
 
-A dossier MAY therefore be presented as a self-contained package: a single transferable unit carrying the dossier, every ACDC reachable from it, the key event logs and transaction event logs needed to establish the key state and revocation status of every issuer in that graph, and any opaque artifacts whose wrappers the dossier references. The ACDCs and log events in a package MUST be serialized as a CESR stream [[3]], since that is the form in which KERI and ACDC already express them. Opaque artifacts are not CESR and travel alongside the stream in whatever container the parties agree on, such as an archive file holding the stream and the artifacts. IPEX provides a natural exchange protocol for a package, but this specification does not mandate it.
+A dossier MAY therefore be presented as a self-contained package: a single transferable unit carrying the dossier, every ACDC reachable from it, the key event logs and transaction event logs needed to establish the key state and revocation status of every issuer in that graph, and any opaque artifacts whose wrappers the dossier references. The ACDCs and log events in a package MUST be serialized as a CESR stream [\[d\]](#ref-d), since that is the form in which KERI and ACDC already express them. Opaque artifacts are not CESR and travel alongside the stream in whatever container the parties agree on, such as an archive file holding the stream and the artifacts. IPEX provides a natural exchange protocol for a package, but this specification does not mandate it.
 
 The defining property is self-containment. A conforming package MUST be verifiable from its own contents alone, with no network access at the time of verification. A verifier SHOULD ingest a package into a fresh, empty datastore and evaluate it there, so that nothing it happens to already know is silently supplying a fact the package failed to carry. A package that verifies only against a populated datastore has not demonstrated what it appears to demonstrate, and the failure will surface later, when an auditor tries to replay it somewhere else.
 
@@ -356,7 +356,7 @@ The *Citation* section says that a citation resolves to "the ACDC and its associ
 
 #### What a Citation Returns
 
-A resource that serves a dossier MUST return a CESR stream [[3]] and SHOULD label it with the media type `application/cesr`. It MUST NOT wrap the stream in another structure, such as a JSON object or a single KERI reply (`rpy`) or exchange (`exn`) message.
+A resource that serves a dossier MUST return a CESR stream [\[d\]](#ref-d) and SHOULD label it with the media type `application/cesr`. It MUST NOT wrap the stream in another structure, such as a JSON object or a single KERI reply (`rpy`) or exchange (`exn`) message.
 
 No wrapper is needed because every element of the stream carries its own proof. Key events carry signatures and witness receipts. ACDCs and transaction events carry attachments that locate the key events that anchor them. A wrapper would add a second parser and no assurance.
 
@@ -589,7 +589,7 @@ Verifiers SHOULD treat manifest processing as semantic validation rather than cr
 A dossier may be assembled and issued by a single party. For example, an artist who wishes to collect cryptographic evidence of their creations may do so as a solo activity. However, many dossiers snapshot evidence contributions from multiple parties, and so represent a group work product that needs an aggregate approval mechanism. In such cases, authorizing the issuance of the ACDC that references all the individual pieces of evidence is managed with joint issuance.
 
 ### Logic
-Joint issuance is best understood not as a single, uniform approach to approval, but as a family or style of approval strategies. It maps onto the problem domain of coordinated control in multi-agent systems, which has been formally studied in robotics, AI, military science, and similar fields. Three variants of cooperative control are regularly mentioned in the literature [[5]] [[6]] [[7]]:
+Joint issuance is best understood not as a single, uniform approach to approval, but as a family or style of approval strategies. It maps onto the problem domain of coordinated control in multi-agent systems, which has been formally studied in robotics, AI, military science, and similar fields. Three variants of cooperative control are regularly mentioned in the literature [\[2\]](#bib-2) [\[3\]](#bib-3) [\[4\]](#bib-4):
 
 * leader-follower 
 * behavior-based control
@@ -813,34 +813,16 @@ This profile illustrates the **Attested Submission Dossier** pattern, which cove
 
 ## Bibliography
 
-[[spec]]
+<a id="bib-1"></a>[1] "Verifiable Voice Protocol." IETF Internet-Draft draft-hardman-verifiable-voice-protocol-05. <https://www.ietf.org/archive/id/draft-hardman-verifiable-voice-protocol-05.html>
 
-[1]. KERI
-[1]: https://trustoverip.github.io/kswg-keri-specification/
+<a id="bib-2"></a>[2] Beard, R. W., Lawton, J., and Hadaegh, F. Y. 2001. A coordination architecture for spacecraft formation control. IEEE Transactions on Control Systems Technology 9, 6 (November 2001), 777–790. <https://doi.org/10.1109/87.960341>
 
-[2]. ACDC
-[2]: https://trustoverip.github.io/kswg-acdc-specification/
+<a id="bib-3"></a>[3] Oh, K.-K., Park, M.-C., and Ahn, H.-S. 2015. A survey of multi-agent formation control. Automatica 53 (March 2015), 424–440. <https://doi.org/10.1016/j.automatica.2014.10.022>
 
-[3]. CESR
-[3]: https://trustoverip.github.io/kswg-cesr-specification/
+<a id="bib-4"></a>[4] Fax, J. A., and Murray, R. M. 2004. Information flow and cooperative control of vehicle formations. IEEE Transactions on Automatic Control 49, 9 (September 2004), 1465–1476. <https://doi.org/10.1109/TAC.2004.834433>
 
-[4]. Verifiable Voice Protocol
-[4]: https://www.ietf.org/archive/id/draft-hardman-verifiable-voice-protocol-05.html
+<a id="bib-5"></a>[5] Hardman, D. "Bytewise and Externalized SAIDs." 2024. <https://dhh1128.github.io/keri-tools>
 
-[5]. Beard, Lawton, and Hadaegh
-[5]: Beard, R. W., Lawton, J., and Hadaegh, F. Y. 2001. A coordination architecture for spacecraft formation control. IEEE Transactions on Control Systems Technology 9, 6 (November 2001), 777–790. https://doi.org/10.1109/87.960341
+<a id="bib-6"></a>[6] Hardman, D. "Foreign Artifact Credential." <https://dhh1128.github.io/keri-tools>
 
-[6]. Oh, Park, and Ahn
-[6]: Oh, K.-K., Park, M.-C., and Ahn, H.-S. 2015. A survey of multi-agent formation control. Automatica 53 (March 2015), 424–440. https://doi.org/10.1016/j.automatica.2014.10.022
-
-[7]. Fax and Murray
-[7]: Fax, J. A., and Murray, R. M. 2004. Information flow and cooperative control of vehicle formations. IEEE Transactions on Automatic Control 49, 9 (September 2004), 1465–1476. https://doi.org/10.1109/TAC.2004.834433
-
-[8]. Hardman, D. "Bytewise and Externalized SAIDs." 2024.
-[8]: https://dhh1128.github.io/keri-tools
-
-[9]. Hardman, D. "Foreign Artifact Credential."
-[9]: https://dhh1128.github.io/keri-tools
-
-[10]. Sporny, M., Longley, D., Sabadello, M., Reed, D., Steele, O., and Allen, C., Eds. "Verifiable Credentials Data Model v2.0." W3C Recommendation.
-[10]: https://www.w3.org/TR/vc-data-model-2.0/
+<a id="bib-7"></a>[7] Sporny, M., Longley, D., Sabadello, M., Reed, D., Steele, O., and Allen, C., Eds. "Verifiable Credentials Data Model v2.0." W3C Recommendation. <https://www.w3.org/TR/vc-data-model-2.0/>
